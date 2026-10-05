@@ -10,7 +10,7 @@ interface DocumentThumbnailProps {
 
 // In-memory cache across row re-renders & route navigations
 const thumbnailMemoryCache = new Map<string, string>()
-const CACHE_PREFIX = 'thumb_crisp_v1_'
+const CACHE_PREFIX = 'thumb_hd_v2_'
 
 export function DocumentThumbnail({ documentId, title }: DocumentThumbnailProps) {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(() => {
@@ -57,19 +57,16 @@ export function DocumentThumbnail({ documentId, title }: DocumentThumbnailProps)
         const page = await doc.getPage(1)
         const unscaledViewport = page.getViewport({ scale: 1.0 })
 
-        // 3. Render at 5x resolution (160x190) so browser downscales with crisp, sharp text & vector rules
-        const targetW = 32 * 5
-        const targetH = 38 * 5
-        const scale = Math.max(
-          targetW / unscaledViewport.width,
-          targetH / unscaledViewport.height
-        )
+        // 3. Render at High-Definition resolution (800px+ width, or scale >= 1.5)
+        // This ensures full vector glyph rasterization with razor-sharp typography and lines
+        const targetWidth = 800
+        const scale = Math.max(targetWidth / unscaledViewport.width, 1.5)
         const viewport = page.getViewport({ scale })
 
         const canvas = document.createElement('canvas')
         canvas.width = Math.ceil(viewport.width)
         canvas.height = Math.ceil(viewport.height)
-        const ctx = canvas.getContext('2d')
+        const ctx = canvas.getContext('2d', { alpha: false })
         if (!ctx) return
 
         // Fill with white paper background so anti-aliasing renders sharp against white
@@ -77,14 +74,13 @@ export function DocumentThumbnail({ documentId, title }: DocumentThumbnailProps)
         ctx.fillRect(0, 0, canvas.width, canvas.height)
 
         await (page as any).render({
-          canvas,
           canvasContext: ctx,
           viewport,
         }).promise
 
         if (isCancelled) return
 
-        // Export as lossless PNG instead of lossy JPEG
+        // Export as lossless PNG
         const dataUrl = canvas.toDataURL('image/png')
         thumbnailMemoryCache.set(documentId, dataUrl)
         try {

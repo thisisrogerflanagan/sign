@@ -115,25 +115,22 @@ export function SignerDocumentViewer({
 
       try {
         const page = await doc.getPage(pageNum)
-        const viewport = page.getViewport({ scale: currentScale })
+        // Crisp Retina vector rasterization: render at true native pixel density (min 2x)
+        const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+        const outputScale = Math.max(dpr, 2)
+        const viewport = page.getViewport({ scale: currentScale * outputScale })
 
-        const outputScale =
-          typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
         const canvas = canvasRef.current
         const context = canvas.getContext('2d')
         if (!context) return
 
-        canvas.width = Math.floor(viewport.width * outputScale)
-        canvas.height = Math.floor(viewport.height * outputScale)
-        canvas.style.width = Math.floor(viewport.width) + 'px'
-        canvas.style.height = Math.floor(viewport.height) + 'px'
-
-        const transform =
-          outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined
+        canvas.width = Math.floor(viewport.width)
+        canvas.height = Math.floor(viewport.height)
+        canvas.style.width = Math.floor(viewport.width / outputScale) + 'px'
+        canvas.style.height = Math.floor(viewport.height / outputScale) + 'px'
 
         await page.render({
           canvasContext: context,
-          transform,
           viewport,
         }).promise
       } catch (err) {
