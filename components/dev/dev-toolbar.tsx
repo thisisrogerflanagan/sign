@@ -35,11 +35,6 @@ export function DevToolbar() {
   const [loadingDocs, setLoadingDocs] = useState(false)
   const [generatingLink, setGeneratingLink] = useState<string | null>(null)
 
-  // Only run in development
-  if (process.env.NODE_ENV !== 'development') {
-    return null
-  }
-
   // Keyboard shortcut: Option+V to toggle
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -179,6 +174,10 @@ export function DevToolbar() {
   const drafts = recentDocs.filter((d) => d.status === 'draft')
   const signable = recentDocs.filter((d) => d.status === 'sent' || d.status === 'viewed')
   const completed = recentDocs.filter((d) => d.status === 'completed')
+
+  if (process.env.NODE_ENV !== 'development') {
+    return null
+  }
 
   return (
     <>

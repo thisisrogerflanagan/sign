@@ -92,37 +92,6 @@ export function SignerDocumentViewer({
   const pdfDocRef = useRef<any>(null)
   const router = useRouter()
 
-  // 1. Render PDF with pdfjs-dist
-  useEffect(() => {
-    if (step === 'landing' || !pdfUrl) return
-
-    let isCancelled = false
-
-    async function loadPdf() {
-      try {
-        setLoadingPdf(true)
-        const pdfjs = await import('pdfjs-dist')
-        pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
-
-        const loadingTask = pdfjs.getDocument({ url: pdfUrl })
-        const doc = await loadingTask.promise
-        if (isCancelled) return
-
-        pdfDocRef.current = doc
-        renderPage(doc, currentPage, scale)
-      } catch (err) {
-        console.error('Signer PDF load error:', err)
-      } finally {
-        setLoadingPdf(false)
-      }
-    }
-
-    loadPdf()
-    return () => {
-      isCancelled = true
-    }
-  }, [step, pdfUrl])
-
   const renderPage = useCallback(
     async (doc: any, pageNum: number, currentScale: number) => {
       if (!doc || !canvasRef.current) return
@@ -153,6 +122,37 @@ export function SignerDocumentViewer({
     },
     []
   )
+
+  // 1. Render PDF with pdfjs-dist
+  useEffect(() => {
+    if (step === 'landing' || !pdfUrl) return
+
+    let isCancelled = false
+
+    async function loadPdf() {
+      try {
+        setLoadingPdf(true)
+        const pdfjs = await import('pdfjs-dist')
+        pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+
+        const loadingTask = pdfjs.getDocument({ url: pdfUrl })
+        const doc = await loadingTask.promise
+        if (isCancelled) return
+
+        pdfDocRef.current = doc
+        renderPage(doc, currentPage, scale)
+      } catch (err) {
+        console.error('Signer PDF load error:', err)
+      } finally {
+        setLoadingPdf(false)
+      }
+    }
+
+    loadPdf()
+    return () => {
+      isCancelled = true
+    }
+  }, [step, pdfUrl, currentPage, scale, renderPage])
 
   useEffect(() => {
     if (pdfDocRef.current && step !== 'landing') {
