@@ -11,7 +11,9 @@ export interface ResolvedSignerContext {
   errorType?: 'not_found' | 'expired' | 'voided' | 'deleted' | 'already_completed'
 }
 
-export async function resolveSignerToken(rawToken: string): Promise<ResolvedSignerContext> {
+export async function resolveSignerToken(
+  rawToken: string
+): Promise<ResolvedSignerContext> {
   const admin = createAdminClient()
   const tokenHash = hashSignerToken(rawToken)
 
@@ -23,12 +25,26 @@ export async function resolveSignerToken(rawToken: string): Promise<ResolvedSign
     .single()
 
   if (signerError || !signer) {
-    return { signer: null, document: null, ownerProfile: null, fields: [], signedUrl: null, errorType: 'not_found' }
+    return {
+      signer: null,
+      document: null,
+      ownerProfile: null,
+      fields: [],
+      signedUrl: null,
+      errorType: 'not_found',
+    }
   }
 
   // Check token expiration
   if (signer.token_expires_at && new Date(signer.token_expires_at) < new Date()) {
-    return { signer, document: null, ownerProfile: null, fields: [], signedUrl: null, errorType: 'expired' }
+    return {
+      signer,
+      document: null,
+      ownerProfile: null,
+      fields: [],
+      signedUrl: null,
+      errorType: 'expired',
+    }
   }
 
   // 2. Look up document
@@ -39,19 +55,63 @@ export async function resolveSignerToken(rawToken: string): Promise<ResolvedSign
     .single()
 
   if (docError || !doc) {
-    return { signer, document: null, ownerProfile: null, fields: [], signedUrl: null, errorType: 'not_found' }
+    return {
+      signer,
+      document: null,
+      ownerProfile: null,
+      fields: [],
+      signedUrl: null,
+      errorType: 'not_found',
+    }
   }
 
   if (doc.status === 'voided') {
-    return { signer, document: doc, ownerProfile: null, fields: [], signedUrl: null, errorType: 'voided' }
+    return {
+      signer,
+      document: doc,
+      ownerProfile: null,
+      fields: [],
+      signedUrl: null,
+      errorType: 'voided',
+    }
   }
 
   if (doc.status === 'deleted') {
-    return { signer, document: doc, ownerProfile: null, fields: [], signedUrl: null, errorType: 'deleted' }
+    return {
+      signer,
+      document: doc,
+      ownerProfile: null,
+      fields: [],
+      signedUrl: null,
+      errorType: 'deleted',
+    }
   }
 
   if (doc.status === 'completed') {
-    return { signer, document: doc, ownerProfile: null, fields: [], signedUrl: null, errorType: 'already_completed' }
+    return {
+      signer,
+      document: doc,
+      ownerProfile: null,
+      fields: [],
+      signedUrl: null,
+      errorType: 'already_completed',
+    }
+  }
+
+  if (doc.status === 'completing') {
+    const updatedAt = doc.updated_at ? new Date(doc.updated_at).getTime() : 0
+    const isStale = Date.now() - updatedAt > 2 * 60 * 1000 // 2 minutes
+    if (!isStale) {
+      return {
+        signer,
+        document: doc,
+        ownerProfile: null,
+        fields: [],
+        signedUrl: null,
+        errorType: 'already_completed',
+      }
+    }
+    // If stale (> 2m), allow the signer to view and retry completing
   }
 
   // 3. Fetch sender profile

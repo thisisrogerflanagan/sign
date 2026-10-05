@@ -57,76 +57,111 @@ export async function POST(
 
     const admin = createAdminClient()
 
-    // Atomic status transition: prevents double-submit race condition on rapid concurrent POSTs
+    // 1. Atomic status transition: flip to transitional 'completing' status from 'sent'/'viewed'
+    // This locks the document against concurrent completion requests without corrupting state on failure
     const nowIso = new Date().toISOString()
     const { data: claimedDoc, error: claimError } = await admin
       .from('documents')
       .update({
-        status: 'completed',
-        completed_at: nowIso,
+        status: 'completing',
+        updated_at: nowIso,
       })
       .eq('id', doc.id)
       .in('status', ['sent', 'viewed'])
       .select('id, status')
       .maybeSingle()
 
-    if (claimError || !claimedDoc) {
+    // If check constraint does not include 'completing' yet (pending migration), allow graceful fallback
+    const constraintNotMigrated = claimError?.code === '23514'
+
+    if (!constraintNotMigrated && (claimError || !claimedDoc)) {
       return NextResponse.json(
-        { error: 'Document has already been completed or is no longer signable' },
+        { error: 'Document is currently being completed or has already been signed' },
         { status: 409 }
       )
     }
 
-    // 1. Download original PDF from 'originals' bucket
-    const { data: originalFile, error: downloadError } = await admin.storage
-      .from('originals')
-      .download(doc.storage_path_original)
+    let signedPath: string
+    let flattenedBuffer: Buffer
 
-    if (downloadError || !originalFile) {
-      console.error('Failed to download original PDF:', downloadError)
+    try {
+      // 2. Download original PDF from 'originals' bucket
+      const { data: originalFile, error: downloadError } = await admin.storage
+        .from('originals')
+        .download(doc.storage_path_original)
+
+      if (downloadError || !originalFile) {
+        throw new Error(
+          `Failed to access original PDF: ${downloadError?.message || 'File not found'}`
+        )
+      }
+
+      const originalBuffer = Buffer.from(await originalFile.arrayBuffer())
+
+      // 3. Flatten fields into the PDF
+      flattenedBuffer = await flattenPdf(
+        originalBuffer,
+        fields.map((f) => ({
+          type: f.type,
+          page: f.page,
+          x: f.x,
+          y: f.y,
+          width: f.width,
+          height: f.height,
+          value: f.value,
+        }))
+      )
+
+      // 4. Upload signed PDF to 'signed' bucket
+      signedPath = `${doc.owner_id}/${doc.id}/signed.pdf`
+      const { error: uploadSignedError } = await admin.storage
+        .from('signed')
+        .upload(signedPath, flattenedBuffer, {
+          contentType: 'application/pdf',
+          upsert: true,
+        })
+
+      if (uploadSignedError) {
+        throw new Error(`Failed to save signed PDF: ${uploadSignedError.message}`)
+      }
+
+      // 5. Success! Now transition document to 'completed' with signed PDF path
+      const { error: completeUpdateError } = await admin
+        .from('documents')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          storage_path_signed: signedPath,
+        })
+        .eq('id', doc.id)
+
+      if (completeUpdateError) {
+        throw new Error(
+          `Failed to set document status to completed: ${completeUpdateError.message}`
+        )
+      }
+    } catch (pipelineErr: any) {
+      console.error(
+        'Error during document completion pipeline, rolling back status:',
+        pipelineErr
+      )
+
+      // ROLLBACK: Reset status back to 'viewed' so the signer can retry cleanly
+      await admin
+        .from('documents')
+        .update({
+          status: 'viewed',
+          completed_at: null,
+          storage_path_signed: null,
+        })
+        .eq('id', doc.id)
+        .eq('status', 'completing')
+
       return NextResponse.json(
-        { error: 'Failed to access original PDF' },
+        { error: 'Failed to process signed document. Please try again.' },
         { status: 500 }
       )
     }
-
-    const originalBuffer = Buffer.from(await originalFile.arrayBuffer())
-
-    // 2. Flatten fields into the PDF
-    const flattenedBuffer = await flattenPdf(
-      originalBuffer,
-      fields.map((f) => ({
-        type: f.type,
-        page: f.page,
-        x: f.x,
-        y: f.y,
-        width: f.width,
-        height: f.height,
-        value: f.value,
-      }))
-    )
-
-    // 3. Upload signed PDF to 'signed' bucket
-    const signedPath = `${doc.owner_id}/${doc.id}/signed.pdf`
-    const { error: uploadSignedError } = await admin.storage
-      .from('signed')
-      .upload(signedPath, flattenedBuffer, {
-        contentType: 'application/pdf',
-        upsert: true,
-      })
-
-    if (uploadSignedError) {
-      console.error('Failed to upload signed PDF:', uploadSignedError)
-      return NextResponse.json({ error: 'Failed to save signed PDF' }, { status: 500 })
-    }
-
-    // 4. Update document with signed storage path
-    await admin
-      .from('documents')
-      .update({
-        storage_path_signed: signedPath,
-      })
-      .eq('id', doc.id)
 
     // 5. Write audit events (with IP & UA)
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || null

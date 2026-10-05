@@ -38,6 +38,9 @@ export function getDocumentSubtitle(doc: {
   if (doc.status === 'viewed') {
     return 'Opened'
   }
+  if (doc.status === 'completing') {
+    return 'Processing'
+  }
   if (doc.status === 'completed') {
     return 'Completed'
   }
@@ -63,6 +66,11 @@ export function getStatusBadgeInfo(status: DocumentStatus) {
       return {
         label: 'Opened',
         color: 'bg-blue-50 text-blue-800 border-blue-200/60',
+      }
+    case 'completing':
+      return {
+        label: 'Processing',
+        color: 'bg-purple-50 text-purple-800 border-purple-200/60',
       }
     case 'completed':
       return {
