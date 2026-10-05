@@ -20,14 +20,18 @@ export default async function SignerPage(props: SignerPageProps) {
   // 1. Edge state views
   if (context.errorType === 'not_found') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]">
+      <div
+        className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]"
+        data-testid="signer-error-not-found"
+      >
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center space-y-4 shadow-sm">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <AlertCircle className="h-6 w-6" />
           </div>
           <h1 className="text-xl font-bold tracking-tight">Signing link not found</h1>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            This signing link does not exist or may have been deleted. Please check the URL or contact the person who sent it.
+            This signing link does not exist or may have been deleted. Please check the
+            URL or contact the person who sent it.
           </p>
         </div>
       </div>
@@ -36,14 +40,20 @@ export default async function SignerPage(props: SignerPageProps) {
 
   if (context.errorType === 'expired') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]">
+      <div
+        className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]"
+        data-testid="signer-error-expired"
+      >
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center space-y-4 shadow-sm">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700">
             <Clock className="h-6 w-6" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">This signing link has expired</h1>
+          <h1 className="text-xl font-bold tracking-tight">
+            This signing link has expired
+          </h1>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            For security, signature requests expire after 90 days. Please reach out to the sender to request a fresh signing link.
+            For security, signature requests expire after 90 days. Please reach out to the
+            sender to request a fresh signing link.
           </p>
         </div>
       </div>
@@ -52,14 +62,18 @@ export default async function SignerPage(props: SignerPageProps) {
 
   if (context.errorType === 'voided' || context.errorType === 'deleted') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]">
+      <div
+        className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]"
+        data-testid="signer-error-voided"
+      >
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center space-y-4 shadow-sm">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-600">
             <Ban className="h-6 w-6" />
           </div>
           <h1 className="text-xl font-bold tracking-tight">This request was canceled</h1>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            The sender has canceled or voided this signature request. No further action can be taken on this document.
+            The sender has canceled or voided this signature request. No further action
+            can be taken on this document.
           </p>
         </div>
       </div>
@@ -68,7 +82,10 @@ export default async function SignerPage(props: SignerPageProps) {
 
   if (context.errorType === 'already_completed') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]">
+      <div
+        className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]"
+        data-testid="signer-error-completed"
+      >
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center space-y-4 shadow-sm">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
             <CheckCircle2 className="h-6 w-6" />
@@ -76,7 +93,8 @@ export default async function SignerPage(props: SignerPageProps) {
           <h1 className="text-xl font-bold tracking-tight">Already signed</h1>
           <p className="text-xs text-muted-foreground leading-relaxed">
             This document was successfully signed and completed on{' '}
-            {formatDate(context.document?.completed_at)}. Both you and the sender received a final signed copy by email.
+            {formatDate(context.document?.completed_at)}. Both you and the sender received
+            a final signed copy by email.
           </p>
         </div>
       </div>

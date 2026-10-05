@@ -18,11 +18,11 @@ export interface DetectedField {
 }
 
 const DEFAULT_DIMENSIONS: Record<FieldType, { width: number; height: number }> = {
-  signature: { width: 0.24, height: 0.05 },
-  initials: { width: 0.12, height: 0.045 },
-  date: { width: 0.18, height: 0.038 },
-  name: { width: 0.22, height: 0.038 },
-  text: { width: 0.24, height: 0.038 },
+  signature: { width: 0.24, height: 0.045 },
+  initials: { width: 0.12, height: 0.035 },
+  date: { width: 0.18, height: 0.028 },
+  name: { width: 0.22, height: 0.028 },
+  text: { width: 0.24, height: 0.028 },
 }
 
 interface PatternRule {
@@ -38,7 +38,16 @@ const PATTERN_RULES: PatternRule[] = [
   // Signature patterns
   {
     type: 'signature',
-    regex: /(?:signature\s*(?:of\s*(?:client|contractor|signer))?|signed\s*by|sign\s*here|authorized\s*signature)\s*[:_]?/i,
+    regex:
+      /(?:^|\b)(?:signature(?:\s+of\s+(?:client|contractor|signer))?|signed\s+by|sign\s+here|authorized\s+signature)\s*[:_]+/i,
+    defaultLabel: 'Signature',
+    confidence: 0.95,
+    placement: 'above',
+  },
+  {
+    type: 'signature',
+    regex:
+      /^(?:signature(?:\s+of\s+(?:client|contractor|signer))?|authorized\s+signature|client\s+signature)$/i,
     defaultLabel: 'Signature',
     confidence: 0.95,
     placement: 'above',
@@ -54,7 +63,14 @@ const PATTERN_RULES: PatternRule[] = [
   // Date patterns
   {
     type: 'date',
-    regex: /(?:date\s*signed|date\s*of\s*signing|dated?)\s*[:_]?/i,
+    regex: /(?:^|\b)(?:date\s+signed|date\s+of\s+signing|dated?)\s*[:_]+/i,
+    defaultLabel: 'Date Signed',
+    confidence: 0.92,
+    placement: 'right',
+  },
+  {
+    type: 'date',
+    regex: /^(?:date\s+signed|date\s+of\s+signing)$/i,
     defaultLabel: 'Date Signed',
     confidence: 0.92,
     placement: 'right',
@@ -63,7 +79,15 @@ const PATTERN_RULES: PatternRule[] = [
   // Printed Name patterns
   {
     type: 'name',
-    regex: /(?:print(?:ed)?\s*name|client\s*name|signer\s*name|full\s*name)\s*[:_]?/i,
+    regex:
+      /(?:^|\b)(?:print(?:ed)?\s+name|client\s+name|signer\s+name|full\s+name)\s*[:_]+/i,
+    defaultLabel: 'Full Name',
+    confidence: 0.9,
+    placement: 'right',
+  },
+  {
+    type: 'name',
+    regex: /^(?:print(?:ed)?\s+name|full\s+name)$/i,
     defaultLabel: 'Full Name',
     confidence: 0.9,
     placement: 'right',
@@ -72,7 +96,14 @@ const PATTERN_RULES: PatternRule[] = [
   // Initials patterns
   {
     type: 'initials',
-    regex: /(?:initial(?:s)?\s*here|initials?)\s*[:_]?/i,
+    regex: /(?:^|\b)(?:initial(?:s)?\s+here|client\s+initials?)\s*[:_]?/i,
+    defaultLabel: 'Initials',
+    confidence: 0.88,
+    placement: 'right',
+  },
+  {
+    type: 'initials',
+    regex: /(?:^|\b)initials?\s*[:_]+/i,
     defaultLabel: 'Initials',
     confidence: 0.88,
     placement: 'right',
@@ -186,7 +217,7 @@ export async function autoDetectPdfFields(
                 0.04,
                 Math.min(
                   0.96 - dims.height,
-                  (pageH - cueY - (dims.height * pageH) - 4) / pageH
+                  (pageH - cueY - dims.height * pageH - 4) / pageH
                 )
               )
             } else {
@@ -204,12 +235,14 @@ export async function autoDetectPdfFields(
               )
             }
 
-            // Avoid placing overlapping boxes
+            // Avoid placing overlapping boxes using bounding box intersection
             const isOverlap = detected.some((existing) => {
               if (existing.page !== pageNum) return false
-              const dx = Math.abs(existing.x - normX)
-              const dy = Math.abs(existing.y - normY)
-              return dx < 0.12 && dy < 0.05
+              const overlapX =
+                normX < existing.x + existing.width && normX + dims.width > existing.x
+              const overlapY =
+                normY < existing.y + existing.height && normY + dims.height > existing.y
+              return overlapX && overlapY
             })
 
             if (!isOverlap) {

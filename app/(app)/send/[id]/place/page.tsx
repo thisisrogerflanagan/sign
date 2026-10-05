@@ -640,6 +640,7 @@ export default function FieldEditorPage({ params }: { params: Promise<{ id: stri
             size="sm"
             onClick={() => router.push(`/send/${documentId}/review`)}
             disabled={fields.length === 0}
+            data-testid="continue-to-review-button"
           >
             Review & send
             <ArrowRight className="ml-1.5 h-4 w-4" />

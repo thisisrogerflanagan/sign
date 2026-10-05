@@ -312,7 +312,10 @@ export function SignatureCaptureModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4 animate-in fade-in">
-      <div className="w-full sm:max-w-xl rounded-t-3xl sm:rounded-2xl border-t sm:border bg-card p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col pb-[max(1.5rem,env(safe-area-inset-bottom))] animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in-95 overflow-y-auto">
+      <div
+        className="w-full sm:max-w-xl rounded-t-3xl sm:rounded-2xl border-t sm:border bg-card p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col pb-[max(1.5rem,env(safe-area-inset-bottom))] animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in-95 overflow-y-auto"
+        data-testid="signature-modal"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b pb-3 shrink-0">
           <div>
@@ -338,6 +341,7 @@ export function SignatureCaptureModal({
             <button
               type="button"
               onClick={() => setMode('type')}
+              data-testid="tab-type"
               className={`flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-1.5 rounded-lg font-medium transition-all min-h-[44px] sm:min-h-0 ${
                 mode === 'type'
                   ? 'bg-background text-foreground shadow-sm font-semibold'
@@ -350,6 +354,7 @@ export function SignatureCaptureModal({
             <button
               type="button"
               onClick={() => setMode('draw')}
+              data-testid="tab-draw"
               className={`flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-1.5 rounded-lg font-medium transition-all min-h-[44px] sm:min-h-0 ${
                 mode === 'draw'
                   ? 'bg-background text-foreground shadow-sm font-semibold'
@@ -383,6 +388,7 @@ export function SignatureCaptureModal({
                 value={typedName}
                 onChange={(e) => setTypedName(e.target.value)}
                 className="text-base sm:text-sm h-11 sm:h-10"
+                data-testid="signature-type-input"
                 autoFocus
               />
             </div>
@@ -549,7 +555,7 @@ export function SignatureCaptureModal({
             <Button variant="outline" size="sm" onClick={onClose}>
               Cancel
             </Button>
-            <Button size="sm" onClick={handleAdopt}>
+            <Button size="sm" onClick={handleAdopt} data-testid="adopt-signature-button">
               <Check className="mr-1.5 h-4 w-4" />
               Adopt and place
             </Button>

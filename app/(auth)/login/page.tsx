@@ -1,22 +1,22 @@
-"use client"
+'use client'
 
-import { Suspense, useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Mail, ArrowRight, CheckCircle2 } from "lucide-react"
+import { Suspense, useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Mail, ArrowRight, CheckCircle2 } from 'lucide-react'
 
 function LoginForm() {
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [cooldown, setCooldown] = useState(0)
   const [error, setError] = useState<string | null>(null)
 
   const searchParams = useSearchParams()
-  const next = searchParams.get("next") || "/"
+  const next = searchParams.get('next') || '/'
 
   useEffect(() => {
     let timer: NodeJS.Timeout
@@ -52,7 +52,10 @@ function LoginForm() {
       setSent(true)
       setCooldown(60)
     } catch (err: any) {
-      setError(err?.message || "We could not send the magic link. Please check your email and try again.")
+      setError(
+        err?.message ||
+          'We could not send the magic link. Please check your email and try again.'
+      )
     } finally {
       setLoading(false)
     }
@@ -77,7 +80,8 @@ function LoginForm() {
             <div>
               <p className="font-medium">Check your inbox</p>
               <p className="mt-0.5 text-xs text-green-700">
-                We sent a magic link to <span className="font-semibold">{email}</span>. Click it to log in.
+                We sent a magic link to <span className="font-semibold">{email}</span>.
+                Click it to log in.
               </p>
             </div>
           </div>
@@ -93,7 +97,7 @@ function LoginForm() {
             disabled={cooldown > 0 || loading}
             onClick={() => handleSendMagicLink()}
           >
-            {cooldown > 0 ? `Resend link in ${cooldown}s` : "Resend magic link"}
+            {cooldown > 0 ? `Resend link in ${cooldown}s` : 'Resend magic link'}
           </Button>
         </div>
       ) : (
@@ -116,11 +120,17 @@ function LoginForm() {
               autoComplete="email"
               autoFocus
               disabled={loading}
+              data-testid="login-email-input"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Sending link..." : "Send magic link"}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading}
+            data-testid="login-submit-button"
+          >
+            {loading ? 'Sending link...' : 'Send magic link'}
             {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
           </Button>
         </form>
@@ -132,7 +142,9 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-[#FCFDFE]">
-      <Suspense fallback={<div className="text-sm text-muted-foreground">Loading...</div>}>
+      <Suspense
+        fallback={<div className="text-sm text-muted-foreground">Loading...</div>}
+      >
         <LoginForm />
       </Suspense>
     </div>

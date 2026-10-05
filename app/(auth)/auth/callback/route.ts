@@ -4,11 +4,15 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const token_hash = searchParams.get('token_hash')
+  const type = (searchParams.get('type') || 'magiclink') as any
   const next = searchParams.get('next') ?? '/'
 
-  if (code) {
+  if (code || token_hash) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { error } = code
+      ? await supabase.auth.exchangeCodeForSession(code)
+      : await supabase.auth.verifyOtp({ token_hash: token_hash!, type })
 
     if (!error) {
       // Forward to next parameter or home

@@ -295,7 +295,10 @@ export function SignerDocumentViewer({
   // Edge view: Completed & Done
   if (completed) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]">
+      <div
+        className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]"
+        data-testid="signing-completed-card"
+      >
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center space-y-5 shadow-sm animate-in fade-in">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
             <CheckCircle2 className="h-7 w-7" />
@@ -311,7 +314,7 @@ export function SignerDocumentViewer({
 
           {downloadUrl && (
             <div className="pt-2">
-              <Button asChild className="w-full">
+              <Button asChild className="w-full" data-testid="download-signed-pdf-button">
                 <a href={downloadUrl} target="_blank" rel="noreferrer" download>
                   Download signed PDF
                 </a>
@@ -364,7 +367,12 @@ export function SignerDocumentViewer({
           </div>
 
           <div className="space-y-3 pt-2">
-            <Button className="w-full" size="lg" onClick={() => setStep('signing')}>
+            <Button
+              className="w-full"
+              size="lg"
+              onClick={() => setStep('signing')}
+              data-testid="review-and-sign-button"
+            >
               Review & Sign Document
             </Button>
             <div>
@@ -372,6 +380,7 @@ export function SignerDocumentViewer({
                 type="button"
                 onClick={() => setDeclineDialogOpen(true)}
                 className="text-xs text-muted-foreground hover:text-destructive underline transition-colors"
+                data-testid="decline-button"
               >
                 I decline to sign this document
               </button>
@@ -437,6 +446,7 @@ export function SignerDocumentViewer({
             onClick={handleComplete}
             disabled={!allRequiredFilled || completing}
             className="shadow-sm"
+            data-testid="complete-button"
           >
             {completing ? (
               <>
@@ -519,6 +529,7 @@ export function SignerDocumentViewer({
                 <div
                   key={field.id}
                   id={`field-${field.id}`}
+                  data-testid={`signer-field-${field.id}`}
                   onClick={() => handleFieldClick(field)}
                   style={{
                     position: 'absolute',
@@ -603,6 +614,7 @@ export function SignerDocumentViewer({
               onChange={(e) => setTextInputValue(e.target.value)}
               placeholder={activeField?.label || 'Type here...'}
               autoFocus
+              data-testid="text-field-input"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   if (activeField) {
@@ -618,6 +630,7 @@ export function SignerDocumentViewer({
               Cancel
             </Button>
             <Button
+              data-testid="text-field-save-button"
               onClick={() => {
                 if (activeField) {
                   saveFieldValue(activeField.id, textInputValue.trim())

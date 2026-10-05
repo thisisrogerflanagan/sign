@@ -143,6 +143,7 @@ export default function SendUploadPage() {
               ref={fileInputRef}
               type="file"
               accept="application/pdf"
+              data-testid="upload-pdf-input"
               className="hidden"
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
@@ -158,7 +159,8 @@ export default function SendUploadPage() {
                 </div>
                 <p className="text-sm font-semibold text-foreground">{file.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {(file.size / (1024 * 1024)).toFixed(2)} MB &bull; Click to choose another file
+                  {(file.size / (1024 * 1024)).toFixed(2)} MB &bull; Click to choose
+                  another file
                 </p>
               </div>
             ) : (
@@ -188,6 +190,7 @@ export default function SendUploadPage() {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Master Services Agreement"
                 disabled={uploading}
+                data-testid="document-title-input"
               />
               <p className="text-[11px] text-muted-foreground">
                 This title is visible to your signer and shown on confirmation emails.
@@ -201,6 +204,7 @@ export default function SendUploadPage() {
               className="w-full"
               disabled={!file || uploading}
               onClick={handleUploadAndContinue}
+              data-testid="upload-continue-button"
             >
               {uploading ? (
                 <>

@@ -35,9 +35,9 @@
 
 ## 🛡️ Phase 4: Production Hardening & Testing
 
-- [ ] **Automated PDF Flattening Tests:** Unit tests verifying `flattenPdf()` produces valid, uncorrupted PDFs across various page orientations and scales.
-- [ ] **Auto-Detection Precision Benchmark:** Test suite with standard sample contracts to maintain >90% precision.
-- [ ] **Playwright E2E Smoke Test:** Automated end-to-end test simulating upload -> placement -> signing -> PDF download.
+- [x] **Automated PDF Flattening Tests:** Unit tests verifying `flattenPdf()` produces valid, uncorrupted PDFs across various page orientations and scales.
+- [x] **Auto-Detection Precision Benchmark:** Test suite with standard sample contracts to maintain >90% precision.
+- [x] **Playwright E2E Smoke Test:** Automated end-to-end test simulating upload -> placement -> signing -> PDF download.
 - [ ] **Staging vs. Production Supabase Environment:** Dedicated separate projects for local development/staging and live production.
 
 ---

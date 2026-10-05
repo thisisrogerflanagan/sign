@@ -125,7 +125,10 @@ export default function ReviewAndSendPage({
   if (sentResult) {
     return (
       <div className="min-h-screen bg-[#FCFDFE] flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-lg rounded-2xl border bg-card p-8 shadow-sm text-center space-y-6 animate-in fade-in zoom-in-95">
+        <div
+          className="w-full max-w-lg rounded-2xl border bg-card p-8 shadow-sm text-center space-y-6 animate-in fade-in zoom-in-95"
+          data-testid="sent-confirmation-card"
+        >
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
             <CheckCircle2 className="h-7 w-7" />
           </div>
@@ -142,11 +145,14 @@ export default function ReviewAndSendPage({
 
           {/* Direct Copyable Signing Link */}
           <div className="rounded-xl border bg-muted/40 p-4 text-left space-y-2">
-            <Label className="text-xs text-muted-foreground">Or share link directly</Label>
+            <Label className="text-xs text-muted-foreground">
+              Or share link directly
+            </Label>
             <div className="flex items-center gap-2">
               <Input
                 readOnly
                 value={sentResult.signingUrl}
+                data-testid="sent-signing-url-input"
                 className="text-xs font-mono bg-background"
               />
               <Button
@@ -212,7 +218,9 @@ export default function ReviewAndSendPage({
 
       <main className="mx-auto max-w-xl px-4 pt-10 sm:px-6">
         <div className="space-y-2 text-center mb-8">
-          <h1 className="text-2xl font-bold tracking-tight">Review & send signature request</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Review & send signature request
+          </h1>
           <p className="text-sm text-muted-foreground">
             Specify who needs to sign. Recipients will not need to create an account.
           </p>
@@ -232,9 +240,15 @@ export default function ReviewAndSendPage({
             <div>
               <p className="font-semibold">No signature fields placed</p>
               <p className="mt-0.5">
-                You must place at least one field before sending. Return to the editor to drop a field.
+                You must place at least one field before sending. Return to the editor to
+                drop a field.
               </p>
-              <Button asChild variant="link" size="sm" className="p-0 h-auto text-xs text-amber-950 font-semibold underline mt-2">
+              <Button
+                asChild
+                variant="link"
+                size="sm"
+                className="p-0 h-auto text-xs text-amber-950 font-semibold underline mt-2"
+              >
                 <Link href={`/send/${documentId}/place`}>Return to field placement</Link>
               </Button>
             </div>
@@ -254,7 +268,8 @@ export default function ReviewAndSendPage({
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Single-signer envelope. All placed fields will be assigned to this recipient.
+              Single-signer envelope. All placed fields will be assigned to this
+              recipient.
             </p>
           </div>
 
@@ -272,13 +287,15 @@ export default function ReviewAndSendPage({
                 onChange={(e) => setSignerEmail(e.target.value)}
                 required
                 disabled={sending}
+                data-testid="signer-email-input"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="signerName" className="flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5 text-muted-foreground" />
-                Signer Name <span className="text-muted-foreground text-xs">(optional)</span>
+                Signer Name{' '}
+                <span className="text-muted-foreground text-xs">(optional)</span>
               </Label>
               <Input
                 id="signerName"
@@ -287,13 +304,15 @@ export default function ReviewAndSendPage({
                 value={signerName}
                 onChange={(e) => setSignerName(e.target.value)}
                 disabled={sending}
+                data-testid="signer-name-input"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="senderMessage" className="flex items-center gap-1.5">
                 <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                Message to Signer <span className="text-muted-foreground text-xs">(optional)</span>
+                Message to Signer{' '}
+                <span className="text-muted-foreground text-xs">(optional)</span>
               </Label>
               <textarea
                 id="senderMessage"
@@ -302,6 +321,7 @@ export default function ReviewAndSendPage({
                 value={senderMessage}
                 onChange={(e) => setSenderMessage(e.target.value)}
                 disabled={sending}
+                data-testid="sender-message-input"
                 className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
@@ -313,6 +333,7 @@ export default function ReviewAndSendPage({
                   type="checkbox"
                   checked={isTest}
                   onChange={(e) => setIsTest(e.target.checked)}
+                  data-testid="test-send-checkbox"
                   className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                 />
                 <div className="text-xs">
@@ -321,7 +342,8 @@ export default function ReviewAndSendPage({
                     Send to myself as a test
                   </span>
                   <p className="text-muted-foreground mt-0.5">
-                    Test sends are exempt from your 50/month fair-use quota and clearly labeled as test requests.
+                    Test sends are exempt from your 50/month fair-use quota and clearly
+                    labeled as test requests.
                   </p>
                 </div>
               </label>
@@ -332,6 +354,7 @@ export default function ReviewAndSendPage({
                 type="submit"
                 className="w-full"
                 disabled={sending || fieldCount === 0 || !signerEmail}
+                data-testid="send-envelope-button"
               >
                 {sending ? (
                   <>
