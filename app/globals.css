@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Airbnb Cereal';
+  src: url('/fonts/AirbnbCereal_W_Bk.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Airbnb Cereal';
+  src: url('/fonts/AirbnbCereal_W_Md.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Airbnb Cereal';
+  src: url('/fonts/AirbnbCereal_W_Bd.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Airbnb Cereal';
+  src: url('/fonts/AirbnbCereal_W_Blk.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --background: 210 33% 99%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+    --radius-md: 8px;
+    --foreground-800: rgba(26, 28, 30, 0.85);
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.8 100% 47.3%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    background-color: #FCFDFE;
+    @apply text-foreground;
+  }
+}
+
+.cta-squircle-button,
+.add-doc-button {
+  width: 40px;
+  height: 40px;
+  background: white;
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 1px 0px, rgba(0, 0, 0, 0.04) 0px 2px 2px 0px, rgba(0, 0, 0, 0.02) 0px 4px 2px 0px, rgba(0, 0, 0, 0.01) 0px 7px 2px 0px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px;
+  border-radius: 12px;
+  corner-shape: superellipse(1.333);
+  padding: 4px;
+}
+
+.cta-squircle-button:hover .cta-squircle-inner,
+.add-doc-button:hover .add-doc-inner {
+  background-color: rgba(26, 28, 30, 0.04);
+}
+
+.main-search-bar {
+  width: 100%;
+  max-width: 360px;
+}
+
+@media (min-width: 900px) {
+  .main-search-bar {
+    min-width: 480px;
+    max-width: 480px;
+  }
+}
+
+.sidebar-element {
+  --indent-level: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: .3125rem;
+  width: 100%;
+  height: 32px;
+  padding: .4375rem .6875rem .4375rem calc(var(--indent-level) * 24px + .375rem);
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: rgba(26, 28, 30, 0.85);
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  font-size: 13px;
+  font-weight: 400;
+  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-element:hover {
+  background-color: rgba(26, 28, 30, 0.06);
+}
+
+.sidebar-element[data-active="true"],
+.sidebar-element.active {
+  background-color: rgba(26, 28, 30, 0.06);
+  color: rgba(26, 28, 30, 0.85);
+  font-weight: 400;
+}
