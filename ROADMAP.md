@@ -16,11 +16,11 @@
 
 ---
 
-## 🚀 Phase 2: Signer Experience & Growth Loop (Next Up)
+## 🚀 Phase 2: Signer Experience & Growth Loop (In Progress ⚡)
 
-- [ ] **Mobile-First Signer Layout:** Optimized touch signature drawing on iOS Safari and Android Chrome.
+- [x] **Mobile-First Signer Layout:** Optimized touch signature drawing on iOS Safari and Android Chrome with dynamic DPR scaling and guided field navigation.
 - [ ] **Custom Message & Branding Preview:** Allow sender to preview the client email and signing page before sending.
-- [ ] **Download Receipts & Completion Email:** Attach the finalized flattened PDF directly to the confirmation email sent to both parties.
+- [x] **Download Receipts & Completion Email:** Attach the finalized flattened PDF directly to the confirmation email sent to both parties.
 - [ ] **Audit Trail Certificate Page:** Optional single-page summary appended to the completed PDF displaying IPs, timestamps, and hashes.
 
 ---
