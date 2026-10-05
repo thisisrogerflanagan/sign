@@ -172,9 +172,6 @@ export default function FieldEditorPage({ params }: { params: Promise<{ id: stri
 
   // Fields state
   const [fields, setFields] = useState<PlacedField[]>([])
-  const [activePaletteItem, setActivePaletteItem] = useState<PaletteItem | null>(
-    PALETTE_ITEMS[0]
-  )
   const [activeFieldId, setActiveFieldId] = useState<string | null>(null)
   const [sidebarTab, setSidebarTab] = useState<'insert' | 'info'>('insert')
 
@@ -455,26 +452,7 @@ export default function FieldEditorPage({ params }: { params: Promise<{ id: stri
     triggerAutoSave(updated)
   }
 
-  // 4. Click canvas to drop active field
-  function handleCanvasClick(e: React.MouseEvent<HTMLDivElement>) {
-    if (!activePaletteItem || !canvasRef.current) return
-
-    const rect = canvasRef.current.getBoundingClientRect()
-    const clickX = e.clientX - rect.left
-    const clickY = e.clientY - rect.top
-
-    if (clickX < 0 || clickX > rect.width || clickY < 0 || clickY > rect.height) {
-      return
-    }
-
-    const dims = DEFAULT_DIMENSIONS[activePaletteItem.type]
-    const normX = (clickX - (dims.width * rect.width) / 2) / rect.width
-    const normY = (clickY - (dims.height * rect.height) / 2) / rect.height
-
-    addFieldAtCoords(activePaletteItem, normX, normY)
-  }
-
-  // 5. Native Drag & Drop onto canvas
+  // 4. Native Drag & Drop onto canvas (fields are only placed via manual drag-and-drop)
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'copy'
@@ -485,7 +463,7 @@ export default function FieldEditorPage({ params }: { params: Promise<{ id: stri
     if (!canvasRef.current) return
 
     const paletteItemId = e.dataTransfer.getData('text/plain')
-    const item = PALETTE_ITEMS.find((p) => p.id === paletteItemId) || activePaletteItem
+    const item = PALETTE_ITEMS.find((p) => p.id === paletteItemId)
     if (!item) return
 
     const rect = canvasRef.current.getBoundingClientRect()
@@ -787,10 +765,10 @@ export default function FieldEditorPage({ params }: { params: Promise<{ id: stri
 
               {/* PDF Canvas Container */}
               <div
-                onClick={handleCanvasClick}
+                onClick={() => setActiveFieldId(null)}
                 onDragOver={handleDragOver}
                 onDrop={handleCanvasDrop}
-                className="relative cursor-crosshair rounded-lg shadow-xl bg-white select-none border border-zinc-200"
+                className="relative cursor-default rounded-lg shadow-xl bg-white select-none border border-zinc-200"
               >
                 <canvas ref={canvasRef} className="block" />
 
@@ -1067,7 +1045,6 @@ export default function FieldEditorPage({ params }: { params: Promise<{ id: stri
                 <div className="space-y-2">
                   {PALETTE_ITEMS.map((item) => {
                     const Icon = item.icon
-                    const isSelected = activePaletteItem?.id === item.id
 
                     return (
                       <div
@@ -1075,19 +1052,11 @@ export default function FieldEditorPage({ params }: { params: Promise<{ id: stri
                         draggable
                         onDragStart={(e) => {
                           e.dataTransfer.setData('text/plain', item.id)
-                          setActivePaletteItem(item)
                         }}
-                        onClick={() => setActivePaletteItem(item)}
-                        className={`group flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-grab active:cursor-grabbing transition-all select-none ${
-                          isSelected
-                            ? 'border-primary bg-primary/5 text-foreground shadow-sm'
-                            : 'border-border bg-card hover:bg-muted/60 text-foreground'
-                        }`}
+                        className="group flex items-center justify-between p-2.5 rounded-xl border border-border bg-card hover:bg-muted/60 text-foreground text-xs cursor-grab active:cursor-grabbing transition-all select-none shadow-2xs hover:shadow-xs"
                       >
                         <div className="flex items-center gap-2.5">
-                          <div
-                            className={`p-1.5 rounded-lg ${isSelected ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}
-                          >
+                          <div className="p-1.5 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                             <Icon className="h-4 w-4" />
                           </div>
                           <span className="font-medium text-sm">{item.label}</span>
