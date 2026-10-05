@@ -21,6 +21,32 @@ export function formatDate(dateString: string | null | undefined): string {
   }
 }
 
+export function getDocumentSubtitle(doc: {
+  status: DocumentStatus
+  page_count?: number | null
+  signers?: any
+}): string {
+  if (doc.status === 'draft') {
+    if (!doc.page_count || doc.page_count === 0) {
+      return 'Empty Document'
+    }
+    return `Draft • ${doc.page_count} page${doc.page_count === 1 ? '' : 's'}`
+  }
+  if (doc.status === 'sent') {
+    return 'Waiting to sign'
+  }
+  if (doc.status === 'viewed') {
+    return 'Opened'
+  }
+  if (doc.status === 'completed') {
+    return 'Completed'
+  }
+  if (doc.status === 'declined') {
+    return 'Declined'
+  }
+  return 'Document'
+}
+
 export function getStatusBadgeInfo(status: DocumentStatus) {
   switch (status) {
     case 'draft':
@@ -79,7 +105,10 @@ export function getNextActionGuidance(doc: {
     const sentDate = new Date(doc.sent_at)
     const daysSince = (Date.now() - sentDate.getTime()) / (1000 * 60 * 60 * 24)
     if (daysSince >= 2) {
-      return { text: `Sent ${Math.floor(daysSince)}d ago. Send a gentle reminder?`, actionType: 'remind' }
+      return {
+        text: `Sent ${Math.floor(daysSince)}d ago. Send a gentle reminder?`,
+        actionType: 'remind',
+      }
     }
     return { text: 'Delivered to signer. Awaiting view.' }
   }
