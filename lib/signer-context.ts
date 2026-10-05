@@ -2,6 +2,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { hashSignerToken } from '@/lib/tokens'
 import { decodeFieldFromDb } from '@/lib/fields-codec'
 
+/**
+ * A document stuck in 'completing' longer than this is assumed to belong to a
+ * crashed/timed-out completion attempt, and the signer may retry.
+ */
+export const COMPLETING_STALE_MS = 2 * 60 * 1000
+
 export interface ResolvedSignerContext {
   signer: any
   document: any
@@ -100,7 +106,7 @@ export async function resolveSignerToken(
 
   if (doc.status === 'completing') {
     const updatedAt = doc.updated_at ? new Date(doc.updated_at).getTime() : 0
-    const isStale = Date.now() - updatedAt > 2 * 60 * 1000 // 2 minutes
+    const isStale = Date.now() - updatedAt > COMPLETING_STALE_MS
     if (!isStale) {
       return {
         signer,

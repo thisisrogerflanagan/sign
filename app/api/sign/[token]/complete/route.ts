@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { resolveSignerToken } from '@/lib/signer-context'
+import { COMPLETING_STALE_MS, resolveSignerToken } from '@/lib/signer-context'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { flattenPdf } from '@/lib/pdf/flatten'
 import { writeAuditEvent } from '@/lib/audit'
@@ -23,7 +23,9 @@ export async function POST(
 
     const { document: doc, signer, ownerProfile, fields } = context
 
-    if (doc.status !== 'sent' && doc.status !== 'viewed') {
+    // resolveSignerToken only lets a 'completing' doc through once it is stale
+    // (a previous attempt crashed or timed out before it could roll back).
+    if (doc.status !== 'sent' && doc.status !== 'viewed' && doc.status !== 'completing') {
       return NextResponse.json(
         { error: 'Document is not in a signable state' },
         { status: 400 }
@@ -58,8 +60,23 @@ export async function POST(
     const admin = createAdminClient()
 
     // 1. Atomic status transition: flip to transitional 'completing' status from 'sent'/'viewed'
+    // (or take over a stale 'completing' left by a crashed attempt).
     // This locks the document against concurrent completion requests without corrupting state on failure
+    //
+    // INVARIANTS (see issue #1):
+    // - 'completing' is only ever entered through this single conditional UPDATE,
+    //   so at most one request holds the lock; a losing request gets 409.
+    // - The lock is released in exactly two ways: success -> 'completed' (with
+    //   storage_path_signed set), or any failure after this point -> 'viewed'.
+    //   A document must never reach 'completed' without a signed PDF.
+    // - If the process dies before releasing, the lock goes stale after
+    //   COMPLETING_STALE_MS and may be re-claimed here (resolveSignerToken lets
+    //   the signer back in at the same threshold).
+    // - Known gap: the final 'completed' update below is not conditioned on
+    //   still holding the lock, so an attempt that outlives COMPLETING_STALE_MS
+    //   and is taken over could double-send completion emails.
     const nowIso = new Date().toISOString()
+    const staleBeforeIso = new Date(Date.now() - COMPLETING_STALE_MS).toISOString()
     const { data: claimedDoc, error: claimError } = await admin
       .from('documents')
       .update({
@@ -67,14 +84,13 @@ export async function POST(
         updated_at: nowIso,
       })
       .eq('id', doc.id)
-      .in('status', ['sent', 'viewed'])
+      .or(
+        `status.in.(sent,viewed),and(status.eq.completing,updated_at.lt."${staleBeforeIso}")`
+      )
       .select('id, status')
       .maybeSingle()
 
-    // If check constraint does not include 'completing' yet (pending migration), allow graceful fallback
-    const constraintNotMigrated = claimError?.code === '23514'
-
-    if (!constraintNotMigrated && (claimError || !claimedDoc)) {
+    if (claimError || !claimedDoc) {
       return NextResponse.json(
         { error: 'Document is currently being completed or has already been signed' },
         { status: 409 }
