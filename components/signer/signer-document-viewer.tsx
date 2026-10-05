@@ -62,6 +62,19 @@ export function SignerDocumentViewer({
   const [scale, setScale] = useState(1.1)
   const [loadingPdf, setLoadingPdf] = useState(true)
 
+  // Auto-fit initial scale on mobile screen widths
+  useEffect(() => {
+    function handleResize() {
+      if (typeof window !== 'undefined' && window.innerWidth < 640) {
+        const targetScale = Math.max(0.5, Math.min(1.0, (window.innerWidth - 24) / 612))
+        setScale(Number(targetScale.toFixed(2)))
+      }
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   // Modals & interaction
   const [signatureModalOpen, setSignatureModalOpen] = useState(false)
   const [textModalOpen, setTextModalOpen] = useState(false)
@@ -244,6 +257,22 @@ export function SignerDocumentViewer({
   const requiredFields = fields.filter((f) => f.required)
   const filledRequiredFields = requiredFields.filter((f) => !!f.value)
   const allRequiredFilled = requiredFields.length === filledRequiredFields.length
+  const nextUnfilledField = requiredFields.find((f) => !f.value)
+
+  function jumpToNextField() {
+    if (!nextUnfilledField) return
+
+    if (nextUnfilledField.page !== currentPage) {
+      setCurrentPage(nextUnfilledField.page)
+      setTimeout(() => {
+        const el = document.getElementById(`field-${nextUnfilledField.id}`)
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 300)
+    } else {
+      const el = document.getElementById(`field-${nextUnfilledField.id}`)
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
 
   // Edge view: Just declined
   if (declined) {
@@ -425,7 +454,7 @@ export function SignerDocumentViewer({
       </header>
 
       {/* Main Canvas Area */}
-      <main className="flex-1 overflow-auto p-4 sm:p-8 flex flex-col items-center justify-start bg-zinc-100/90">
+      <main className="flex-1 overflow-auto p-4 pb-24 sm:p-8 sm:pb-8 flex flex-col items-center justify-start bg-zinc-100/90">
         <div className="space-y-4 flex flex-col items-center">
           {/* Controls Bar */}
           <div className="flex items-center gap-4 bg-background/95 backdrop-blur-sm rounded-full border px-4 py-1.5 shadow-sm text-xs sticky top-0 z-10">
@@ -489,6 +518,7 @@ export function SignerDocumentViewer({
               return (
                 <div
                   key={field.id}
+                  id={`field-${field.id}`}
                   onClick={() => handleFieldClick(field)}
                   style={{
                     position: 'absolute',
@@ -600,6 +630,67 @@ export function SignerDocumentViewer({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Mobile Sticky Bottom Action Bar */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 p-3 bg-background/95 border-t backdrop-blur-md z-30 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            disabled={currentPage <= 1}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-xs font-semibold px-1 text-muted-foreground whitespace-nowrap">
+            {currentPage}/{pageCount}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            disabled={currentPage >= pageCount}
+            onClick={() => setCurrentPage((p) => Math.min(pageCount, p + 1))}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {allRequiredFilled ? (
+          <Button
+            size="sm"
+            onClick={handleComplete}
+            disabled={completing}
+            className="flex-1 h-10 shadow-sm font-semibold"
+          >
+            {completing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Finalizing...
+              </>
+            ) : (
+              <>
+                <FileCheck className="mr-1.5 h-4 w-4" />
+                Sign and finish
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="default"
+            onClick={jumpToNextField}
+            className="flex-1 h-10 shadow-sm font-medium text-xs flex items-center justify-center gap-1.5"
+          >
+            <span>Next field</span>
+            <span className="text-[11px] opacity-80">
+              ({filledRequiredFields.length}/{requiredFields.length})
+            </span>
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        )}
+      </div>
     </div>
   )
 }
