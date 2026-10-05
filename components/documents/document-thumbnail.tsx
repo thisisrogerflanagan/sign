@@ -10,6 +10,7 @@ interface DocumentThumbnailProps {
 
 // In-memory cache across row re-renders & route navigations
 const thumbnailMemoryCache = new Map<string, string>()
+const CACHE_PREFIX = 'thumb_crisp_v1_'
 
 export function DocumentThumbnail({ documentId, title }: DocumentThumbnailProps) {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(() => {
@@ -24,7 +25,7 @@ export function DocumentThumbnail({ documentId, title }: DocumentThumbnailProps)
 
     // Check sessionStorage
     try {
-      const cached = sessionStorage.getItem(`thumb_${documentId}`)
+      const cached = sessionStorage.getItem(`${CACHE_PREFIX}${documentId}`)
       if (cached) {
         thumbnailMemoryCache.set(documentId, cached)
         setThumbnailUrl(cached)
@@ -56,19 +57,24 @@ export function DocumentThumbnail({ documentId, title }: DocumentThumbnailProps)
         const page = await doc.getPage(1)
         const unscaledViewport = page.getViewport({ scale: 1.0 })
 
-        // 3. Render at High-DPI for crisp 32x38 thumbnail
-        const targetW = 32
-        const targetH = 38
-        const scale =
-          Math.min(targetW / unscaledViewport.width, targetH / unscaledViewport.height) *
-          2
+        // 3. Render at 5x resolution (160x190) so browser downscales with crisp, sharp text & vector rules
+        const targetW = 32 * 5
+        const targetH = 38 * 5
+        const scale = Math.max(
+          targetW / unscaledViewport.width,
+          targetH / unscaledViewport.height
+        )
         const viewport = page.getViewport({ scale })
 
         const canvas = document.createElement('canvas')
-        canvas.width = Math.floor(viewport.width)
-        canvas.height = Math.floor(viewport.height)
+        canvas.width = Math.ceil(viewport.width)
+        canvas.height = Math.ceil(viewport.height)
         const ctx = canvas.getContext('2d')
         if (!ctx) return
+
+        // Fill with white paper background so anti-aliasing renders sharp against white
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
 
         await (page as any).render({
           canvas,
@@ -78,10 +84,11 @@ export function DocumentThumbnail({ documentId, title }: DocumentThumbnailProps)
 
         if (isCancelled) return
 
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
+        // Export as lossless PNG instead of lossy JPEG
+        const dataUrl = canvas.toDataURL('image/png')
         thumbnailMemoryCache.set(documentId, dataUrl)
         try {
-          sessionStorage.setItem(`thumb_${documentId}`, dataUrl)
+          sessionStorage.setItem(`${CACHE_PREFIX}${documentId}`, dataUrl)
         } catch {
           // Ignore quota errors
         }
@@ -114,6 +121,7 @@ export function DocumentThumbnail({ documentId, title }: DocumentThumbnailProps)
           src={thumbnailUrl}
           alt={title || 'Document thumbnail'}
           className="w-full h-full object-cover object-top pointer-events-none"
+          style={{ imageRendering: '-webkit-optimize-contrast' }}
         />
       ) : loading ? (
         <div className="w-full h-full p-1 flex flex-col justify-between bg-zinc-50/50 animate-pulse">

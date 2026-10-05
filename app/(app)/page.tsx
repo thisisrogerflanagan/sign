@@ -217,9 +217,9 @@ export default async function HomePage(props: HomePageProps) {
           )
         ) : (
           /* Table Layout matching Screenshot media_1791222121961.png */
-          <div className="rounded-xl border border-zinc-200/80 bg-white overflow-hidden shadow-xs">
+          <div className="w-full">
             {/* Table Header */}
-            <div className="flex items-center px-4 py-3 border-b border-zinc-100 text-xs font-normal text-[#8A8F98] bg-white select-none">
+            <div className="flex items-center px-1 sm:px-2 py-2.5 border-b border-[#EAEBEF] text-xs font-normal text-[#8A8F98] select-none">
               <div className="flex-1 min-w-0 pr-4">
                 <Link
                   href={getSortUrl('name')}
@@ -291,7 +291,7 @@ export default async function HomePage(props: HomePageProps) {
             </div>
 
             {/* Table Rows */}
-            <div className="divide-y divide-zinc-100">
+            <div className="divide-y divide-[#EAEBEF] border-b border-[#EAEBEF]">
               {documents?.map((doc: any) => {
                 const signer = Array.isArray(doc.signers) ? doc.signers[0] : doc.signers
                 const href =
@@ -299,11 +299,12 @@ export default async function HomePage(props: HomePageProps) {
                     ? `/send/${doc.id}/place`
                     : `/documents/${doc.id}`
                 const subtitle = getDocumentSubtitle(doc)
+                const isUntitled = !doc.title || doc.title === 'Untitled Document'
 
                 return (
                   <div
                     key={doc.id}
-                    className="group flex items-center px-4 py-3 hover:bg-[#FAFAFA] transition-colors"
+                    className="group flex items-center px-1 sm:px-2 py-2.5 hover:bg-black/[0.02] transition-colors"
                   >
                     {/* Document Info with PDF Page 1 Thumbnail */}
                     <Link
@@ -314,7 +315,13 @@ export default async function HomePage(props: HomePageProps) {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-[13px] text-[#121417] tracking-tight truncate group-hover:text-primary transition-colors">
+                          <span
+                            className={
+                              isUntitled
+                                ? 'italic text-[13px] text-[#8A8F98] font-normal tracking-tight truncate group-hover:text-[#121417] transition-colors'
+                                : 'font-medium text-[13px] text-[#121417] tracking-tight truncate group-hover:text-primary transition-colors'
+                            }
+                          >
                             {doc.title || 'Untitled Document'}
                           </span>
                           {doc.is_test && (
