@@ -109,36 +109,39 @@ export function SignerDocumentViewer({
     }
   }, [step, pdfUrl])
 
-  const renderPage = useCallback(async (doc: any, pageNum: number, currentScale: number) => {
-    if (!doc || !canvasRef.current) return
+  const renderPage = useCallback(
+    async (doc: any, pageNum: number, currentScale: number) => {
+      if (!doc || !canvasRef.current) return
 
-    try {
-      const page = await doc.getPage(pageNum)
-      const viewport = page.getViewport({ scale: currentScale })
+      try {
+        const page = await doc.getPage(pageNum)
+        const viewport = page.getViewport({ scale: currentScale })
 
-      const outputScale = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
-      const canvas = canvasRef.current
-      const context = canvas.getContext('2d')
-      if (!context) return
+        const outputScale =
+          typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+        const canvas = canvasRef.current
+        const context = canvas.getContext('2d')
+        if (!context) return
 
-      canvas.width = Math.floor(viewport.width * outputScale)
-      canvas.height = Math.floor(viewport.height * outputScale)
-      canvas.style.width = Math.floor(viewport.width) + 'px'
-      canvas.style.height = Math.floor(viewport.height) + 'px'
+        canvas.width = Math.floor(viewport.width * outputScale)
+        canvas.height = Math.floor(viewport.height * outputScale)
+        canvas.style.width = Math.floor(viewport.width) + 'px'
+        canvas.style.height = Math.floor(viewport.height) + 'px'
 
-      const transform = outputScale !== 1
-        ? [outputScale, 0, 0, outputScale, 0, 0]
-        : undefined
+        const transform =
+          outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined
 
-      await page.render({
-        canvasContext: context,
-        transform,
-        viewport,
-      }).promise
-    } catch (err) {
-      console.error('Error rendering signer page:', err)
-    }
-  }, [])
+        await page.render({
+          canvasContext: context,
+          transform,
+          viewport,
+        }).promise
+      } catch (err) {
+        console.error('Error rendering signer page:', err)
+      }
+    },
+    []
+  )
 
   useEffect(() => {
     if (pdfDocRef.current && step !== 'landing') {
@@ -150,7 +153,9 @@ export function SignerDocumentViewer({
   async function saveFieldValue(fieldId: string, value: string) {
     // Optimistic UI update
     setFields((prev) =>
-      prev.map((f) => (f.id === fieldId ? { ...f, value, filled_at: new Date().toISOString() } : f))
+      prev.map((f) =>
+        f.id === fieldId ? { ...f, value, filled_at: new Date().toISOString() } : f
+      )
     )
 
     try {
@@ -253,7 +258,8 @@ export function SignerDocumentViewer({
           </div>
           <h1 className="text-xl font-bold tracking-tight">Request declined</h1>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            You declined to sign &quot;{documentTitle}&quot;. We have notified {senderDisplayName}.
+            You declined to sign &quot;{documentTitle}&quot;. We have notified{' '}
+            {senderDisplayName}.
           </p>
         </div>
       </div>
@@ -271,7 +277,8 @@ export function SignerDocumentViewer({
           <div className="space-y-1.5">
             <h1 className="text-2xl font-bold tracking-tight">You&apos;re all done!</h1>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              &quot;{documentTitle}&quot; has been signed. A final PDF with the tamper-evident activity record has been emailed to{' '}
+              &quot;{documentTitle}&quot; has been signed. A final PDF with the
+              tamper-evident activity record has been emailed to{' '}
               <span className="font-semibold text-foreground">{signerEmail}</span>.
             </p>
           </div>
@@ -302,7 +309,8 @@ export function SignerDocumentViewer({
           <div className="space-y-2">
             <h1 className="text-2xl font-bold tracking-tight">{documentTitle}</h1>
             <p className="text-sm text-muted-foreground">
-              Sent by <strong className="text-foreground">{senderDisplayName}</strong> &bull; {pageCount} page{pageCount === 1 ? '' : 's'}
+              Sent by <strong className="text-foreground">{senderDisplayName}</strong>{' '}
+              &bull; {pageCount} page{pageCount === 1 ? '' : 's'}
             </p>
           </div>
 
@@ -312,7 +320,10 @@ export function SignerDocumentViewer({
               Electronic Signature Disclosure & Consent
             </p>
             <p>
-              By clicking <strong>Review & Sign</strong>, you agree to review and electronically sign this document. You understand that your electronic signature is legally binding to the same extent as a pen-and-paper signature under the ESIGN Act and UETA.
+              By clicking <strong>Review & Sign</strong>, you agree to review and
+              electronically sign this document. You understand that your electronic
+              signature is legally binding to the same extent as a pen-and-paper signature
+              under the ESIGN Act and UETA.
             </p>
             <p>
               <Link
@@ -381,7 +392,9 @@ export function SignerDocumentViewer({
       <header className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4 sm:px-6 z-20">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-sm truncate max-w-xs">{documentTitle}</span>
-          <span className="text-xs text-muted-foreground hidden sm:inline">&bull; Sent by {senderDisplayName}</span>
+          <span className="text-xs text-muted-foreground hidden sm:inline">
+            &bull; Sent by {senderDisplayName}
+          </span>
         </div>
 
         {/* Progress Tracker */}
@@ -510,12 +523,18 @@ export function SignerDocumentViewer({
                   ) : (
                     /* Prompt to fill */
                     <div className="flex items-center gap-1 text-[11px] font-semibold">
-                      {field.type === 'signature' && <FileSignature className="h-3.5 w-3.5" />}
-                      {field.type === 'initials' && <span className="font-bold text-xs">IN</span>}
+                      {field.type === 'signature' && (
+                        <FileSignature className="h-3.5 w-3.5" />
+                      )}
+                      {field.type === 'initials' && (
+                        <span className="font-bold text-xs">IN</span>
+                      )}
                       {field.type === 'date' && <Calendar className="h-3.5 w-3.5" />}
                       {field.type === 'name' && <User className="h-3.5 w-3.5" />}
                       {field.type === 'text' && <Type className="h-3.5 w-3.5" />}
-                      <span>Tap to {field.type === 'name' ? 'fill name' : field.type}</span>
+                      <span>
+                        Tap to {field.type === 'name' ? 'fill name' : field.type}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -529,7 +548,12 @@ export function SignerDocumentViewer({
       <SignatureCaptureModal
         isOpen={signatureModalOpen}
         onClose={() => setSignatureModalOpen(false)}
-        title={activeField?.type === 'initials' ? 'Adopt your initials' : 'Adopt your signature'}
+        title={
+          activeField?.type === 'initials'
+            ? 'Adopt your initials'
+            : 'Adopt your signature'
+        }
+        defaultName={signerName}
         onSave={(dataUrl) => {
           if (activeField) {
             saveFieldValue(activeField.id, dataUrl)

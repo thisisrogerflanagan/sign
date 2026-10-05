@@ -81,13 +81,43 @@ interface PaletteItem {
 }
 
 const PALETTE_ITEMS: PaletteItem[] = [
-  { id: 'signature', type: 'signature', label: 'Signature *', defaultLabel: 'Signature', icon: FileSignature },
+  {
+    id: 'signature',
+    type: 'signature',
+    label: 'Signature *',
+    defaultLabel: 'Signature',
+    icon: FileSignature,
+  },
   { id: 'name', type: 'name', label: 'Name', defaultLabel: 'Full Name', icon: User },
   { id: 'email', type: 'text', label: 'Email', defaultLabel: 'Email', icon: Mail },
-  { id: 'company', type: 'text', label: 'Company', defaultLabel: 'Company', icon: Building2 },
-  { id: 'title', type: 'text', label: 'Title', defaultLabel: 'Job Title', icon: Briefcase },
-  { id: 'date', type: 'date', label: 'Date Signed', defaultLabel: 'Date Signed', icon: Calendar },
-  { id: 'initials', type: 'initials', label: 'Initials', defaultLabel: 'Initials', icon: PenTool },
+  {
+    id: 'company',
+    type: 'text',
+    label: 'Company',
+    defaultLabel: 'Company',
+    icon: Building2,
+  },
+  {
+    id: 'title',
+    type: 'text',
+    label: 'Title',
+    defaultLabel: 'Job Title',
+    icon: Briefcase,
+  },
+  {
+    id: 'date',
+    type: 'date',
+    label: 'Date Signed',
+    defaultLabel: 'Date Signed',
+    icon: Calendar,
+  },
+  {
+    id: 'initials',
+    type: 'initials',
+    label: 'Initials',
+    defaultLabel: 'Initials',
+    icon: PenTool,
+  },
 ]
 
 interface DocumentStats {
@@ -111,11 +141,7 @@ function formatRelativeTime(isoString?: string) {
   return `${days} day${days > 1 ? 's' : ''} ago`
 }
 
-export default function FieldEditorPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
+export default function FieldEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const [documentId, setDocumentId] = useState<string>('')
   const [docTitle, setDocTitle] = useState('Document')
   const [docCreatedAt, setDocCreatedAt] = useState<string>('')
@@ -146,7 +172,9 @@ export default function FieldEditorPage({
 
   // Fields state
   const [fields, setFields] = useState<PlacedField[]>([])
-  const [activePaletteItem, setActivePaletteItem] = useState<PaletteItem | null>(PALETTE_ITEMS[0])
+  const [activePaletteItem, setActivePaletteItem] = useState<PaletteItem | null>(
+    PALETTE_ITEMS[0]
+  )
   const [activeFieldId, setActiveFieldId] = useState<string | null>(null)
   const [sidebarTab, setSidebarTab] = useState<'insert' | 'info'>('insert')
 
@@ -161,7 +189,13 @@ export default function FieldEditorPage({
   const pdfDocRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const isDraggingRef = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null)
+  const isDraggingRef = useRef<{
+    id: string
+    startX: number
+    startY: number
+    origX: number
+    origY: number
+  } | null>(null)
 
   const router = useRouter()
   const { toast } = useToast()
@@ -198,7 +232,13 @@ export default function FieldEditorPage({
         loadedFields = fieldsData.fields.map((f: any) => ({
           id: f.id || Math.random().toString(36).substring(2),
           type: f.type,
-          label: f.label || (f.type === 'name' ? 'Full Name' : f.type === 'date' ? 'Date Signed' : f.type.toUpperCase()),
+          label:
+            f.label ||
+            (f.type === 'name'
+              ? 'Full Name'
+              : f.type === 'date'
+                ? 'Date Signed'
+                : f.type.toUpperCase()),
           page: f.page,
           x: f.x,
           y: f.y,
@@ -297,7 +337,7 @@ export default function FieldEditorPage({
       }
 
       const trimmed = fullText.trim()
-      const words = trimmed ? (trimmed.match(/\b\S+\b/g)?.length || 0) : 0
+      const words = trimmed ? trimmed.match(/\b\S+\b/g)?.length || 0 : 0
       const characters = trimmed.length
       const paragraphs = trimmed
         ? trimmed.split(/\n+/).filter((line) => line.trim().length > 0).length
@@ -315,40 +355,43 @@ export default function FieldEditorPage({
     }
   }
 
-  const renderPage = useCallback(async (doc: any, pageNum: number, currentScale: number) => {
-    if (!doc || !canvasRef.current) return
+  const renderPage = useCallback(
+    async (doc: any, pageNum: number, currentScale: number) => {
+      if (!doc || !canvasRef.current) return
 
-    try {
-      const page = await doc.getPage(pageNum)
-      const viewport = page.getViewport({ scale: currentScale })
+      try {
+        const page = await doc.getPage(pageNum)
+        const viewport = page.getViewport({ scale: currentScale })
 
-      // FIX BLURRINESS: Multiply canvas resolution by window.devicePixelRatio
-      const outputScale = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1
+        // FIX BLURRINESS: Multiply canvas resolution by window.devicePixelRatio
+        const outputScale =
+          typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
 
-      const canvas = canvasRef.current
-      const context = canvas.getContext('2d')
-      if (!context) return
+        const canvas = canvasRef.current
+        const context = canvas.getContext('2d')
+        if (!context) return
 
-      canvas.width = Math.floor(viewport.width * outputScale)
-      canvas.height = Math.floor(viewport.height * outputScale)
-      canvas.style.width = Math.floor(viewport.width) + 'px'
-      canvas.style.height = Math.floor(viewport.height) + 'px'
+        canvas.width = Math.floor(viewport.width * outputScale)
+        canvas.height = Math.floor(viewport.height * outputScale)
+        canvas.style.width = Math.floor(viewport.width) + 'px'
+        canvas.style.height = Math.floor(viewport.height) + 'px'
 
-      const transform = outputScale !== 1
-        ? [outputScale, 0, 0, outputScale, 0, 0]
-        : undefined
+        const transform =
+          outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined
 
-      const renderContext = {
-        canvasContext: context,
-        transform,
-        viewport,
+        const renderContext = {
+          canvasContext: context,
+          transform,
+          viewport,
+        }
+
+        await page.render(renderContext).promise
+      } catch (renderErr) {
+        console.error('Failed to render page:', renderErr)
       }
-
-      await page.render(renderContext).promise
-    } catch (renderErr) {
-      console.error('Failed to render page:', renderErr)
-    }
-  }, [])
+    },
+    []
+  )
 
   useEffect(() => {
     if (pdfDocRef.current) {
@@ -357,36 +400,39 @@ export default function FieldEditorPage({
   }, [currentPage, scale, renderPage])
 
   // 3. Debounced Auto-save
-  const triggerAutoSave = useCallback((updatedFields: PlacedField[]) => {
-    if (!documentId) return
-    setSavedStatus('Saving...')
+  const triggerAutoSave = useCallback(
+    (updatedFields: PlacedField[]) => {
+      if (!documentId) return
+      setSavedStatus('Saving...')
 
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
-
-    saveTimeoutRef.current = setTimeout(async () => {
-      try {
-        setSaving(true)
-        const res = await fetch(`/api/documents/${documentId}/fields`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fields: updatedFields }),
-        })
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}))
-          throw new Error(errData.error || 'Auto-save failed')
-        }
-        setSavedStatus('All changes saved')
-        setTimeout(() => setSavedStatus(null), 2500)
-      } catch (err) {
-        console.error('Save failed:', err)
-        setSavedStatus('Failed to save')
-      } finally {
-        setSaving(false)
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
       }
-    }, 600)
-  }, [documentId])
+
+      saveTimeoutRef.current = setTimeout(async () => {
+        try {
+          setSaving(true)
+          const res = await fetch(`/api/documents/${documentId}/fields`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fields: updatedFields }),
+          })
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}))
+            throw new Error(errData.error || 'Auto-save failed')
+          }
+          setSavedStatus('All changes saved')
+          setTimeout(() => setSavedStatus(null), 2500)
+        } catch (err) {
+          console.error('Save failed:', err)
+          setSavedStatus('Failed to save')
+        } finally {
+          setSaving(false)
+        }
+      }, 600)
+    },
+    [documentId]
+  )
 
   // Helper to add a new field at normalized coordinates
   function addFieldAtCoords(paletteItem: PaletteItem, normX: number, normY: number) {
@@ -549,7 +595,10 @@ export default function FieldEditorPage({
             return {
               ...f,
               x: Math.max(0, Math.min(1 - f.width, isDraggingRef.current.origX + deltaX)),
-              y: Math.max(0, Math.min(1 - f.height, isDraggingRef.current.origY + deltaY)),
+              y: Math.max(
+                0,
+                Math.min(1 - f.height, isDraggingRef.current.origY + deltaY)
+              ),
             }
           }
           return f
@@ -589,7 +638,9 @@ export default function FieldEditorPage({
             </Link>
           </Button>
           <div className="h-4 w-px bg-border hidden sm:block" />
-          <span className="font-semibold text-sm truncate max-w-[200px] sm:max-w-xs">{docTitle}</span>
+          <span className="font-semibold text-sm truncate max-w-[200px] sm:max-w-xs">
+            {docTitle}
+          </span>
         </div>
 
         {/* Stepper info */}
@@ -637,7 +688,8 @@ export default function FieldEditorPage({
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
                 <span className="font-medium">
-                  <strong>{suggestionCount}</strong> field{suggestionCount === 1 ? '' : 's'} auto-detected in this document
+                  <strong>{suggestionCount}</strong> field
+                  {suggestionCount === 1 ? '' : 's'} auto-detected in this document
                 </span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -773,18 +825,28 @@ export default function FieldEditorPage({
                             ? 'border-2 border-dashed border-amber-600 bg-amber-100/90 text-amber-950 shadow-md ring-2 ring-amber-400 z-20'
                             : 'border-2 border-dashed border-amber-500 bg-amber-50/80 text-amber-900 hover:border-amber-600 z-10'
                           : isSelected
-                          ? 'border-2 border-primary bg-primary/20 text-primary shadow-md ring-2 ring-primary/30 z-20'
-                          : field.assigned_to === 'sender'
-                          ? 'border-2 border-purple-500 bg-purple-50/80 text-purple-900 hover:border-purple-600 z-10'
-                          : 'border-2 border-blue-500/80 bg-blue-50/80 text-blue-900 hover:border-primary z-10'
+                            ? 'border-2 border-primary bg-primary/20 text-primary shadow-md ring-2 ring-primary/30 z-20'
+                            : field.assigned_to === 'sender'
+                              ? 'border-2 border-purple-500 bg-purple-50/80 text-purple-900 hover:border-purple-600 z-10'
+                              : 'border-2 border-blue-500/80 bg-blue-50/80 text-blue-900 hover:border-primary z-10'
                       }`}
                     >
                       <div className="flex items-center gap-1.5 text-[11px] font-semibold truncate pointer-events-none">
-                        {field.type === 'signature' && <FileSignature className="h-3.5 w-3.5 shrink-0" />}
-                        {field.type === 'initials' && <PenTool className="h-3.5 w-3.5 shrink-0" />}
-                        {field.type === 'date' && <Calendar className="h-3.5 w-3.5 shrink-0" />}
-                        {field.type === 'name' && <User className="h-3.5 w-3.5 shrink-0" />}
-                        {field.type === 'text' && <Type className="h-3.5 w-3.5 shrink-0" />}
+                        {field.type === 'signature' && (
+                          <FileSignature className="h-3.5 w-3.5 shrink-0" />
+                        )}
+                        {field.type === 'initials' && (
+                          <PenTool className="h-3.5 w-3.5 shrink-0" />
+                        )}
+                        {field.type === 'date' && (
+                          <Calendar className="h-3.5 w-3.5 shrink-0" />
+                        )}
+                        {field.type === 'name' && (
+                          <User className="h-3.5 w-3.5 shrink-0" />
+                        )}
+                        {field.type === 'text' && (
+                          <Type className="h-3.5 w-3.5 shrink-0" />
+                        )}
 
                         <span className="truncate">{field.label}</span>
 
@@ -861,7 +923,9 @@ export default function FieldEditorPage({
                             </Label>
                             <Input
                               value={field.label}
-                              onChange={(e) => handleUpdateActiveField({ label: e.target.value })}
+                              onChange={(e) =>
+                                handleUpdateActiveField({ label: e.target.value })
+                              }
                               className="h-7 text-xs"
                               placeholder="e.g. Client signature"
                             />
@@ -874,7 +938,9 @@ export default function FieldEditorPage({
                             <div className="grid grid-cols-2 gap-1.5">
                               <button
                                 type="button"
-                                onClick={() => handleUpdateActiveField({ assigned_to: 'signer' })}
+                                onClick={() =>
+                                  handleUpdateActiveField({ assigned_to: 'signer' })
+                                }
                                 className={`py-1 px-2 rounded-lg border text-xs font-medium transition-colors ${
                                   field.assigned_to === 'signer'
                                     ? 'border-primary bg-primary/10 text-primary'
@@ -885,7 +951,9 @@ export default function FieldEditorPage({
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleUpdateActiveField({ assigned_to: 'sender' })}
+                                onClick={() =>
+                                  handleUpdateActiveField({ assigned_to: 'sender' })
+                                }
                                 className={`py-1 px-2 rounded-lg border text-xs font-medium transition-colors ${
                                   field.assigned_to === 'sender'
                                     ? 'border-purple-600 bg-purple-50 text-purple-900 font-semibold'
@@ -939,7 +1007,9 @@ export default function FieldEditorPage({
                               <input
                                 type="checkbox"
                                 checked={field.required}
-                                onChange={(e) => handleUpdateActiveField({ required: e.target.checked })}
+                                onChange={(e) =>
+                                  handleUpdateActiveField({ required: e.target.checked })
+                                }
                                 className="rounded border-zinc-300 text-primary h-3.5 w-3.5"
                               />
                               <span>Required</span>
@@ -1020,7 +1090,9 @@ export default function FieldEditorPage({
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
-                          <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                          <div
+                            className={`p-1.5 rounded-lg ${isSelected ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}
+                          >
                             <Icon className="h-4 w-4" />
                           </div>
                           <span className="font-medium text-sm">{item.label}</span>
@@ -1068,7 +1140,9 @@ export default function FieldEditorPage({
                         >
                           <div className="flex items-center gap-1.5 truncate">
                             <span className="font-medium truncate">{f.label}</span>
-                            <span className="text-[10px] text-muted-foreground">(p. {f.page})</span>
+                            <span className="text-[10px] text-muted-foreground">
+                              (p. {f.page})
+                            </span>
                           </div>
 
                           <div className="flex items-center gap-1 shrink-0">
@@ -1116,13 +1190,17 @@ export default function FieldEditorPage({
                     <div className="flex items-center gap-2.5">
                       <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0 stroke-[1.6]" />
                       <span className="text-muted-foreground font-normal">Created:</span>
-                      <span className="font-medium text-foreground">{formatRelativeTime(docCreatedAt)}</span>
+                      <span className="font-medium text-foreground">
+                        {formatRelativeTime(docCreatedAt)}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2.5">
                       <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0 stroke-[1.6]" />
                       <span className="text-muted-foreground font-normal">Updated:</span>
-                      <span className="font-medium text-foreground">{formatRelativeTime(docUpdatedAt)}</span>
+                      <span className="font-medium text-foreground">
+                        {formatRelativeTime(docUpdatedAt)}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2.5">
@@ -1130,7 +1208,9 @@ export default function FieldEditorPage({
                         <User className="h-2.5 w-2.5 text-muted-foreground stroke-[2]" />
                       </div>
                       <span className="text-muted-foreground font-normal">Author:</span>
-                      <span className="font-medium text-foreground truncate">{docAuthor}</span>
+                      <span className="font-medium text-foreground truncate">
+                        {docAuthor}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1305,7 +1385,12 @@ export default function FieldEditorPage({
         <SignatureCaptureModal
           isOpen={senderSignModalOpen}
           onClose={() => setSenderSignModalOpen(false)}
-          title={activeField.type === 'initials' ? 'Adopt your initials' : 'Adopt your signature'}
+          title={
+            activeField.type === 'initials'
+              ? 'Adopt your initials'
+              : 'Adopt your signature'
+          }
+          defaultName={docAuthor}
           onSave={(dataUrl) => {
             handleUpdateActiveField({ value: dataUrl })
             setSenderSignModalOpen(false)
@@ -1323,7 +1408,8 @@ export default function FieldEditorPage({
           <DialogHeader>
             <DialogTitle>Delete document?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{docTitle}&quot;? This cannot be undone.
+              Are you sure you want to delete &quot;{docTitle}&quot;? This cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -1354,14 +1440,17 @@ export default function FieldEditorPage({
               Document Version History
             </DialogTitle>
             <DialogDescription>
-              Watchpost Sign retains immutable original and working draft snapshots for tamper-evidence.
+              Watchpost Sign retains immutable original and working draft snapshots for
+              tamper-evidence.
             </DialogDescription>
           </DialogHeader>
           <div className="py-3 space-y-3 text-xs">
             <div className="p-3 rounded-xl border bg-muted/30 flex items-center justify-between">
               <div>
                 <p className="font-semibold text-foreground">Current Working Draft</p>
-                <p className="text-[11px] text-muted-foreground">Updated {formatRelativeTime(docUpdatedAt)}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Updated {formatRelativeTime(docUpdatedAt)}
+                </p>
               </div>
               <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
                 Active
@@ -1371,7 +1460,9 @@ export default function FieldEditorPage({
             <div className="p-3 rounded-xl border bg-card flex items-center justify-between">
               <div>
                 <p className="font-semibold text-foreground">Original Upload Snapshot</p>
-                <p className="text-[11px] text-muted-foreground">Created {formatRelativeTime(docCreatedAt)}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Created {formatRelativeTime(docCreatedAt)}
+                </p>
               </div>
               <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-muted text-muted-foreground">
                 Original
