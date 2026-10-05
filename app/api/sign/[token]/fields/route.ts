@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { resolveSignerToken } from '@/lib/signer-context'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { decodeFieldFromDb } from '@/lib/fields-codec'
 
 export async function POST(
   req: Request,
@@ -11,7 +12,10 @@ export async function POST(
     const context = await resolveSignerToken(token)
 
     if (context.errorType || !context.document) {
-      return NextResponse.json({ error: 'Invalid or inactive signing link' }, { status: 403 })
+      return NextResponse.json(
+        { error: 'Invalid or inactive signing link' },
+        { status: 403 }
+      )
     }
 
     const body = await req.json()
@@ -21,11 +25,11 @@ export async function POST(
       return NextResponse.json({ error: 'Missing fieldId' }, { status: 400 })
     }
 
-    // Ensure field belongs to this document
+    // Ensure field belongs to this document and is assigned to the signer
     const admin = createAdminClient()
     const { data: field, error: fieldError } = await admin
       .from('fields')
-      .select('id, document_id, value')
+      .select('*')
       .eq('id', fieldId)
       .eq('document_id', context.document.id)
       .single()
@@ -34,8 +38,20 @@ export async function POST(
       return NextResponse.json({ error: 'Field not found' }, { status: 404 })
     }
 
+    const decoded = decodeFieldFromDb(field)
+    if (decoded.assigned_to !== 'signer' || (field as any).assigned_to === 'sender') {
+      return NextResponse.json(
+        { error: 'Cannot modify fields assigned to sender' },
+        { status: 403 }
+      )
+    }
+
     let newValue = value !== undefined ? value : null
-    if (field.value && typeof field.value === 'string' && field.value.startsWith('{"__wp":')) {
+    if (
+      field.value &&
+      typeof field.value === 'string' &&
+      field.value.startsWith('{"__wp":')
+    ) {
       try {
         const parsed = JSON.parse(field.value)
         parsed.val = newValue

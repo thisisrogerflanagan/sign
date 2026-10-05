@@ -15,7 +15,10 @@ export async function POST(
     const context = await resolveSignerToken(token)
 
     if (context.errorType || !context.document) {
-      return NextResponse.json({ error: 'Invalid or expired signing link' }, { status: 403 })
+      return NextResponse.json(
+        { error: 'Invalid or expired signing link' },
+        { status: 403 }
+      )
     }
 
     const { document: doc, signer, ownerProfile, fields } = context
@@ -27,18 +30,52 @@ export async function POST(
       )
     }
 
-    // Check all required fields are filled
-    const requiredFields = fields.filter((f) => f.required)
-    const missing = requiredFields.filter((f) => !f.value)
+    // Check all required fields are filled, separating signer from sender fields
+    const signerFields = fields.filter((f) => f.assigned_to === 'signer')
+    const senderFields = fields.filter((f) => f.assigned_to === 'sender')
 
-    if (missing.length > 0) {
+    const missingSigner = signerFields.filter((f) => f.required && !f.value)
+    if (missingSigner.length > 0) {
       return NextResponse.json(
-        { error: `Please fill all ${missing.length} required fields before signing.` },
+        {
+          error: `Please fill all ${missingSigner.length} required fields before signing.`,
+        },
+        { status: 400 }
+      )
+    }
+
+    const missingSender = senderFields.filter((f) => f.required && !f.value)
+    if (missingSender.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            'Document cannot be completed because required sender fields are missing.',
+        },
         { status: 400 }
       )
     }
 
     const admin = createAdminClient()
+
+    // Atomic status transition: prevents double-submit race condition on rapid concurrent POSTs
+    const nowIso = new Date().toISOString()
+    const { data: claimedDoc, error: claimError } = await admin
+      .from('documents')
+      .update({
+        status: 'completed',
+        completed_at: nowIso,
+      })
+      .eq('id', doc.id)
+      .in('status', ['sent', 'viewed'])
+      .select('id, status')
+      .maybeSingle()
+
+    if (claimError || !claimedDoc) {
+      return NextResponse.json(
+        { error: 'Document has already been completed or is no longer signable' },
+        { status: 409 }
+      )
+    }
 
     // 1. Download original PDF from 'originals' bucket
     const { data: originalFile, error: downloadError } = await admin.storage
@@ -47,7 +84,10 @@ export async function POST(
 
     if (downloadError || !originalFile) {
       console.error('Failed to download original PDF:', downloadError)
-      return NextResponse.json({ error: 'Failed to access original PDF' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Failed to access original PDF' },
+        { status: 500 }
+      )
     }
 
     const originalBuffer = Buffer.from(await originalFile.arrayBuffer())
@@ -80,13 +120,10 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to save signed PDF' }, { status: 500 })
     }
 
-    // 4. Update document status to completed
-    const nowIso = new Date().toISOString()
+    // 4. Update document with signed storage path
     await admin
       .from('documents')
       .update({
-        status: 'completed',
-        completed_at: nowIso,
         storage_path_signed: signedPath,
       })
       .eq('id', doc.id)
