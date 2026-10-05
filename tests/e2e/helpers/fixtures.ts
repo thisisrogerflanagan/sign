@@ -8,8 +8,19 @@ export interface FixtureOptions {
   status?: 'sent' | 'viewed' | 'voided' | 'deleted' | 'completed'
   isTest?: boolean
   expiresInHours?: number
-  signerName?: string
+  signerName?: string | null
   signerEmail?: string
+  additionalFields?: Array<{
+    type: 'signature' | 'initials' | 'date' | 'name' | 'text'
+    label: string
+    page: number
+    x: number
+    y: number
+    width: number
+    height: number
+    required: boolean
+    value?: string | null
+  }>
 }
 
 export async function createTestDocumentFixture(options: FixtureOptions = {}) {
@@ -17,7 +28,8 @@ export async function createTestDocumentFixture(options: FixtureOptions = {}) {
   const title = options.title || `Test Agreement ${Date.now()}`
   const status = options.status || 'sent'
   const isTest = options.isTest !== undefined ? options.isTest : true
-  const signerName = options.signerName || 'Automated Test Signer'
+  const signerName =
+    options.signerName !== undefined ? options.signerName : 'Automated Test Signer'
   const signerEmail = options.signerEmail || 'robot-signer@watchpost.test'
 
   // Ensure owner user exists
@@ -120,6 +132,28 @@ export async function createTestDocumentFixture(options: FixtureOptions = {}) {
     console.error('Failed to create test field:', fieldErr)
   }
 
+  const createdAdditionalFields: any[] = []
+  if (options.additionalFields && options.additionalFields.length > 0) {
+    for (const af of options.additionalFields) {
+      const enc = encodeFieldForDb(
+        {
+          ...af,
+          assigned_to: 'signer',
+        },
+        doc.id
+      )
+      const { data: createdAf } = await admin
+        .from('fields')
+        .insert({
+          ...enc,
+          signer_id: signer.id,
+        })
+        .select()
+        .single()
+      if (createdAf) createdAdditionalFields.push(createdAf)
+    }
+  }
+
   async function cleanup() {
     try {
       await admin.from('fields').delete().eq('document_id', doc.id)
@@ -141,6 +175,7 @@ export async function createTestDocumentFixture(options: FixtureOptions = {}) {
     signer,
     rawToken,
     field,
+    additionalFields: createdAdditionalFields,
     cleanup,
   }
 }

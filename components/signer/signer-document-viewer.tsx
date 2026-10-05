@@ -80,6 +80,7 @@ export function SignerDocumentViewer({
   const [textModalOpen, setTextModalOpen] = useState(false)
   const [textInputValue, setTextInputValue] = useState('')
   const [activeField, setActiveField] = useState<any | null>(null)
+  const [currentSignerName, setCurrentSignerName] = useState(signerName || '')
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false)
   const [declineReason, setDeclineReason] = useState('')
   const [declined, setDeclined] = useState(false)
@@ -192,13 +193,13 @@ export function SignerDocumentViewer({
         if (!f.value) {
           if (f.type === 'date') {
             saveFieldValue(f.id, today)
-          } else if (f.type === 'name' && signerName) {
-            saveFieldValue(f.id, signerName)
+          } else if (f.type === 'name' && currentSignerName) {
+            saveFieldValue(f.id, currentSignerName)
           }
         }
       })
     }
-  }, [step, fields, signerName])
+  }, [step, fields, currentSignerName])
 
   function handleFieldClick(field: any) {
     setActiveField(field)
@@ -212,11 +213,37 @@ export function SignerDocumentViewer({
       })
       saveFieldValue(field.id, field.value || today)
     } else if (field.type === 'name') {
-      saveFieldValue(field.id, field.value || signerName || 'Signer')
+      // Prompt user for their full name via modal (pre-filled with known name if any)
+      setTextInputValue(field.value || currentSignerName || '')
+      setTextModalOpen(true)
     } else if (field.type === 'text') {
       setTextInputValue(field.value || '')
       setTextModalOpen(true)
     }
+  }
+
+  function handleSaveTextInput() {
+    if (!activeField) return
+    const val = textInputValue.trim()
+    if (!val) return
+
+    saveFieldValue(activeField.id, val)
+
+    // If this is a name field, store as currentSignerName and auto-populate other empty name fields
+    if (activeField.type === 'name' || /name/i.test(activeField.label || '')) {
+      setCurrentSignerName(val)
+      fields.forEach((f) => {
+        if (
+          f.id !== activeField.id &&
+          !f.value &&
+          (f.type === 'name' || (f.type === 'text' && /name/i.test(f.label || '')))
+        ) {
+          saveFieldValue(f.id, val)
+        }
+      })
+    }
+
+    setTextModalOpen(false)
   }
 
   // 3. Decline Action
@@ -598,36 +625,56 @@ export function SignerDocumentViewer({
             ? 'Adopt your initials'
             : 'Adopt your signature'
         }
-        defaultName={signerName}
-        onSave={(dataUrl) => {
+        defaultName={currentSignerName}
+        onSave={(dataUrl, adoptedName) => {
           if (activeField) {
             saveFieldValue(activeField.id, dataUrl)
+          }
+          if (adoptedName && adoptedName.trim() && adoptedName.trim() !== 'Signature') {
+            const cleanName = adoptedName.trim()
+            setCurrentSignerName(cleanName)
+            // Auto-detect and populate any empty name fields
+            fields.forEach((f) => {
+              if (
+                !f.value &&
+                (f.type === 'name' || (f.type === 'text' && /name/i.test(f.label || '')))
+              ) {
+                saveFieldValue(f.id, cleanName)
+              }
+            })
           }
         }}
       />
 
-      {/* Free Text Input Dialog */}
+      {/* Free Text & Name Input Dialog */}
       <Dialog open={textModalOpen} onOpenChange={setTextModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{activeField?.label || 'Enter information'}</DialogTitle>
+            <DialogTitle>
+              {activeField?.type === 'name'
+                ? 'Enter your Full Name'
+                : activeField?.label || 'Enter information'}
+            </DialogTitle>
             <DialogDescription>
-              Please enter the requested information to complete this field.
+              {activeField?.type === 'name'
+                ? 'Please enter your legal full name as it should appear on this document.'
+                : 'Please enter the requested information to complete this field.'}
             </DialogDescription>
           </DialogHeader>
           <div className="py-2">
             <Input
               value={textInputValue}
               onChange={(e) => setTextInputValue(e.target.value)}
-              placeholder={activeField?.label || 'Type here...'}
+              placeholder={
+                activeField?.type === 'name'
+                  ? 'e.g. Jane Doe'
+                  : activeField?.label || 'Type here...'
+              }
               autoFocus
               data-testid="text-field-input"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  if (activeField) {
-                    saveFieldValue(activeField.id, textInputValue.trim())
-                    setTextModalOpen(false)
-                  }
+                  handleSaveTextInput()
                 }
               }}
             />
@@ -636,15 +683,7 @@ export function SignerDocumentViewer({
             <Button variant="outline" onClick={() => setTextModalOpen(false)}>
               Cancel
             </Button>
-            <Button
-              data-testid="text-field-save-button"
-              onClick={() => {
-                if (activeField) {
-                  saveFieldValue(activeField.id, textInputValue.trim())
-                  setTextModalOpen(false)
-                }
-              }}
-            >
+            <Button data-testid="text-field-save-button" onClick={handleSaveTextInput}>
               Save
             </Button>
           </DialogFooter>

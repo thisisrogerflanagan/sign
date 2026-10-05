@@ -52,7 +52,7 @@ export const SIGNATURE_FONTS: ScriptFontOption[] = [
 interface SignatureCaptureModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (dataUrl: string) => void
+  onSave: (dataUrl: string, typedNameText?: string) => void
   title?: string
   defaultName?: string
 }
@@ -302,7 +302,7 @@ export function SignatureCaptureModal({
         ctx.fillText(textToRender, tempCanvas.width / 2, tempCanvas.height / 2)
 
         const dataUrl = tempCanvas.toDataURL('image/png')
-        onSave(dataUrl)
+        onSave(dataUrl, textToRender)
         onClose()
       }
     }

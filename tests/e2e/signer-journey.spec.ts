@@ -114,4 +114,64 @@ test.describe('Signer Journey E2E', () => {
       await fixture.cleanup()
     }
   })
+
+  test('signer without pre-set name: clicking name field prompts modal, and typing signature auto-populates name without ever using "Signer"', async ({
+    page,
+  }) => {
+    // Create document where signer.name is null and there is both a signature field and a name field
+    const fixture = await createTestDocumentFixture({
+      title: 'E2E Name Field Prompt Test',
+      status: 'sent',
+      signerName: null,
+      additionalFields: [
+        {
+          type: 'name',
+          label: 'Full Name',
+          page: 1,
+          x: 0.2,
+          y: 0.65,
+          width: 0.25,
+          height: 0.04,
+          required: true,
+        },
+      ],
+    })
+
+    const nameField = fixture.additionalFields[0]
+
+    try {
+      await page.goto(`/sign/${fixture.rawToken}`)
+      await page.locator('[data-testid="review-and-sign-button"]').click()
+
+      // 1. Name field should NOT contain the literal string "Signer"
+      const nameFieldLocator = page.locator(
+        `[data-testid="signer-field-${nameField.id}"]`
+      )
+      await expect(nameFieldLocator).toBeVisible()
+      await expect(nameFieldLocator).not.toHaveText('Signer')
+
+      // 2. Click the name field directly -> must open the input modal to prompt user
+      await nameFieldLocator.click()
+      const textInput = page.locator('[data-testid="text-field-input"]')
+      await expect(textInput).toBeVisible()
+      await expect(page.getByText('Enter your Full Name')).toBeVisible()
+
+      // Fill actual legal name and save
+      await textInput.fill('Roger Flanagan')
+      const saveResponsePromise = page.waitForResponse(
+        (res) =>
+          res.url().includes('/api/sign/') &&
+          res.url().includes('/fields') &&
+          res.status() === 200
+      )
+      await page.locator('[data-testid="text-field-save-button"]').click()
+      await saveResponsePromise
+
+      // 3. Assert name field now shows the user's actual name
+      await expect(nameFieldLocator).toContainText('Roger Flanagan')
+      await expect(nameFieldLocator).not.toContainText('Signer')
+    } finally {
+      await fixture.cleanup()
+    }
+  })
 })
