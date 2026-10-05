@@ -52,7 +52,7 @@ const PATTERN_RULES: PatternRule[] = [
   {
     type: 'signature',
     regex:
-      /(?:^|\b)(?:signature(?:\s+of\s+(?:client|contractor|signer))?|signed\s+by|sign\s+here|authorized\s+signature)\s*[:_]+/i,
+      /(?:^|\b)(?:signature(?:\s+of\s+(?:client|contractor|signer))?|(?:client|contractor|authorized)\s+signature|signed\s+by|sign\s+here)\s*[:_]+/i,
     defaultLabel: 'Signature',
     confidence: 0.95,
     placement: 'above',

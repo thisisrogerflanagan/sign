@@ -283,9 +283,12 @@ export function SignatureCaptureModal({
       const selectedFont =
         SIGNATURE_FONTS.find((f) => f.id === selectedFontId) || SIGNATURE_FONTS[0]
 
-      // Ensure fonts are ready before rasterizing
+      // Ensure fonts are ready before rasterizing (with 1s safety timeout)
       if (typeof document !== 'undefined' && document.fonts) {
-        await document.fonts.ready
+        await Promise.race([
+          document.fonts.ready,
+          new Promise((resolve) => setTimeout(resolve, 1000)),
+        ])
       }
 
       const tempCanvas = document.createElement('canvas')

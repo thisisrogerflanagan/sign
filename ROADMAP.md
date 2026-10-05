@@ -38,6 +38,7 @@
 - [x] **Automated PDF Flattening Tests:** Unit tests verifying `flattenPdf()` produces valid, uncorrupted PDFs across various page orientations and scales.
 - [x] **Auto-Detection Precision Benchmark:** Test suite with standard sample contracts to maintain >90% precision.
 - [x] **Playwright E2E Smoke Test:** Automated end-to-end test simulating upload -> placement -> signing -> PDF download.
+- [x] **Automated Screenshot Capture ("Robot Clicker"):** Dedicated Playwright harness (`npm run shots`) generating 2x Retina screenshots across all 18 sender, signer, mobile, and error states.
 - [ ] **Staging vs. Production Supabase Environment:** Dedicated separate projects for local development/staging and live production.
 
 ---

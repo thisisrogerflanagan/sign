@@ -37,8 +37,11 @@ export function DevToolbar() {
 
   // Keyboard shortcut: Option+V to toggle
   useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).__DISABLE_DEV_TOOLBAR__) return
+
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.altKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+      // Option+V (Alt+V) only - never Cmd+V which is paste on Mac
+      if (e.altKey && !e.metaKey && e.key.toLowerCase() === 'v') {
         e.preventDefault()
         setIsOpen((prev) => !prev)
       } else if (e.key === 'Escape' && isOpen) {
@@ -175,7 +178,10 @@ export function DevToolbar() {
   const signable = recentDocs.filter((d) => d.status === 'sent' || d.status === 'viewed')
   const completed = recentDocs.filter((d) => d.status === 'completed')
 
-  if (process.env.NODE_ENV !== 'development') {
+  if (
+    process.env.NODE_ENV !== 'development' ||
+    (typeof window !== 'undefined' && (window as any).__DISABLE_DEV_TOOLBAR__)
+  ) {
     return null
   }
 
@@ -183,6 +189,7 @@ export function DevToolbar() {
     <>
       {/* Floating Trigger Button */}
       <button
+        data-testid="dev-toolbar-trigger"
         onClick={() => setIsOpen((prev) => !prev)}
         className="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-full bg-zinc-900 text-white shadow-xl hover:bg-zinc-800 transition-all border border-zinc-700 select-none group"
         title="Browse all views (Option + V)"
@@ -196,7 +203,10 @@ export function DevToolbar() {
 
       {/* Modal Drawer */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
+        <div
+          data-testid="dev-toolbar-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150"
+        >
           <div
             className="w-full max-w-2xl max-h-[85vh] bg-white rounded-2xl shadow-2xl border border-zinc-200 flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}

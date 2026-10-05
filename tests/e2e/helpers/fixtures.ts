@@ -5,11 +5,12 @@ import { getSamplePdfBuffer } from './test-pdf'
 
 export interface FixtureOptions {
   title?: string
-  status?: 'sent' | 'viewed' | 'voided' | 'deleted' | 'completed'
+  status?: 'draft' | 'sent' | 'viewed' | 'voided' | 'deleted' | 'completed'
   isTest?: boolean
   expiresInHours?: number
   signerName?: string | null
   signerEmail?: string
+  includeSignatureField?: boolean
   additionalFields?: Array<{
     type: 'signature' | 'initials' | 'date' | 'name' | 'text'
     label: string
@@ -20,6 +21,7 @@ export interface FixtureOptions {
     height: number
     required: boolean
     value?: string | null
+    is_suggestion?: boolean
   }>
 }
 
@@ -102,34 +104,38 @@ export async function createTestDocumentFixture(options: FixtureOptions = {}) {
   }
 
   // Insert signature field
-  const fieldPayload = {
-    type: 'signature' as const,
-    label: 'Signature',
-    assigned_to: 'signer' as const,
-    page: 1,
-    x: 0.2,
-    y: 0.5,
-    width: 0.25,
-    height: 0.06,
-    required: true,
-    value:
-      status === 'completed'
-        ? 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
-        : null,
-  }
+  let field: any = null
+  if (options.includeSignatureField !== false) {
+    const fieldPayload = {
+      type: 'signature' as const,
+      label: 'Signature',
+      assigned_to: 'signer' as const,
+      page: 1,
+      x: 0.2,
+      y: 0.5,
+      width: 0.25,
+      height: 0.06,
+      required: true,
+      value:
+        status === 'completed'
+          ? 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+          : null,
+    }
 
-  const encodedField = encodeFieldForDb(fieldPayload, doc.id)
-  const { data: field, error: fieldErr } = await admin
-    .from('fields')
-    .insert({
-      ...encodedField,
-      signer_id: signer.id,
-    })
-    .select()
-    .single()
+    const encodedField = encodeFieldForDb(fieldPayload, doc.id)
+    const { data: createdField, error: fieldErr } = await admin
+      .from('fields')
+      .insert({
+        ...encodedField,
+        signer_id: signer.id,
+      })
+      .select()
+      .single()
 
-  if (fieldErr) {
-    console.error('Failed to create test field:', fieldErr)
+    if (fieldErr) {
+      console.error('Failed to create test field:', fieldErr)
+    }
+    field = createdField
   }
 
   const createdAdditionalFields: any[] = []
