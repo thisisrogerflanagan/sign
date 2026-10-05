@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
+import { type EmailOtpType } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const token_hash = searchParams.get('token_hash')
-  const type = (searchParams.get('type') || 'magiclink') as any
+  const type = (searchParams.get('type') as EmailOtpType) || 'magiclink'
   const next = searchParams.get('next') ?? '/'
 
   if (code || token_hash) {

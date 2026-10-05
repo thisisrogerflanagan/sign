@@ -73,4 +73,45 @@ test.describe('Signer Journey E2E', () => {
       await fixture.cleanup()
     }
   })
+
+  test('signer opens link, clicks decline, confirms reason, and transitions to declined state', async ({
+    page,
+  }) => {
+    const fixture = await createTestDocumentFixture({
+      title: 'E2E Partnership Agreement To Decline',
+      status: 'sent',
+    })
+
+    try {
+      await page.goto(`/sign/${fixture.rawToken}`)
+      await expect(page.getByText('E2E Partnership Agreement To Decline')).toBeVisible()
+
+      // Click decline link
+      const declineButton = page.locator('[data-testid="decline-button"]')
+      await expect(declineButton).toBeVisible()
+      await declineButton.click()
+
+      // Fill decline reason and confirm
+      const reasonInput = page.getByPlaceholder('Optional reason for declining')
+      await expect(reasonInput).toBeVisible()
+      await reasonInput.fill('Need updated deliverables terms')
+
+      const declineResponsePromise = page.waitForResponse(
+        (res) =>
+          res.url().includes('/api/sign/') &&
+          res.url().includes('/decline') &&
+          res.status() === 200
+      )
+      const confirmButton = page.locator('[data-testid="confirm-decline-button"]')
+      await confirmButton.click()
+      await declineResponsePromise
+
+      // Verify request declined view is shown
+      const declinedCard = page.locator('[data-testid="request-declined-card"]')
+      await expect(declinedCard).toBeVisible({ timeout: 10000 })
+      await expect(page.getByText('Request declined')).toBeVisible()
+    } finally {
+      await fixture.cleanup()
+    }
+  })
 })

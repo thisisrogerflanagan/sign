@@ -277,7 +277,10 @@ export function SignerDocumentViewer({
   // Edge view: Just declined
   if (declined) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]">
+      <div
+        className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]"
+        data-testid="request-declined-card"
+      >
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center space-y-4 shadow-sm animate-in fade-in">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-600">
             <Ban className="h-6 w-6" />
@@ -408,7 +411,11 @@ export function SignerDocumentViewer({
               <Button variant="outline" onClick={() => setDeclineDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleDecline}>
+              <Button
+                variant="destructive"
+                onClick={handleDecline}
+                data-testid="confirm-decline-button"
+              >
                 Decline request
               </Button>
             </DialogFooter>
