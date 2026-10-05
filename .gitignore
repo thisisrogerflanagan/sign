@@ -12,6 +12,9 @@
 /playwright-report
 /tests/.auth
 
+# generated screenshots (regenerate with `npm run shots`)
+/screenshots/
+
 # next.js
 /.next/
 /out/
