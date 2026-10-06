@@ -21,7 +21,7 @@ export default async function SignerPage(props: SignerPageProps) {
   if (context.errorType === 'not_found') {
     return (
       <div
-        className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]"
+        className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#FCFDFE]"
         data-testid="signer-error-not-found"
       >
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center space-y-4 shadow-sm">
@@ -34,6 +34,18 @@ export default async function SignerPage(props: SignerPageProps) {
             URL or contact the person who sent it.
           </p>
         </div>
+
+        <div className="mt-6 text-center">
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-1 px-3 rounded-full hover:bg-muted/40"
+          >
+            <span>Sent via</span>
+            <span className="font-semibold text-foreground">Scribbble</span>
+          </Link>
+        </div>
       </div>
     )
   }
@@ -41,7 +53,7 @@ export default async function SignerPage(props: SignerPageProps) {
   if (context.errorType === 'expired') {
     return (
       <div
-        className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]"
+        className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#FCFDFE]"
         data-testid="signer-error-expired"
       >
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center space-y-4 shadow-sm">
@@ -56,6 +68,18 @@ export default async function SignerPage(props: SignerPageProps) {
             sender to request a fresh signing link.
           </p>
         </div>
+
+        <div className="mt-6 text-center">
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-1 px-3 rounded-full hover:bg-muted/40"
+          >
+            <span>Sent via</span>
+            <span className="font-semibold text-foreground">Scribbble</span>
+          </Link>
+        </div>
       </div>
     )
   }
@@ -63,7 +87,7 @@ export default async function SignerPage(props: SignerPageProps) {
   if (context.errorType === 'voided' || context.errorType === 'deleted') {
     return (
       <div
-        className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]"
+        className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#FCFDFE]"
         data-testid="signer-error-voided"
       >
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center space-y-4 shadow-sm">
@@ -76,6 +100,18 @@ export default async function SignerPage(props: SignerPageProps) {
             can be taken on this document.
           </p>
         </div>
+
+        <div className="mt-6 text-center">
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-1 px-3 rounded-full hover:bg-muted/40"
+          >
+            <span>Sent via</span>
+            <span className="font-semibold text-foreground">Scribbble</span>
+          </Link>
+        </div>
       </div>
     )
   }
@@ -83,7 +119,7 @@ export default async function SignerPage(props: SignerPageProps) {
   if (context.errorType === 'already_completed') {
     return (
       <div
-        className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]"
+        className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#FCFDFE]"
         data-testid="signer-error-completed"
       >
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center space-y-4 shadow-sm">
@@ -96,6 +132,18 @@ export default async function SignerPage(props: SignerPageProps) {
             {formatDate(context.document?.completed_at)}. Both you and the sender received
             a final signed copy by email.
           </p>
+        </div>
+
+        <div className="mt-6 text-center">
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-1 px-3 rounded-full hover:bg-muted/40"
+          >
+            <span>Sent via</span>
+            <span className="font-semibold text-foreground">Scribbble</span>
+          </Link>
         </div>
       </div>
     )

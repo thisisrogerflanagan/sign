@@ -5,6 +5,10 @@ import { flattenPdf } from '@/lib/pdf/flatten'
 import { writeAuditEvent } from '@/lib/audit'
 import { captureServerEvent } from '@/lib/analytics'
 import { sendTransactionalEmail } from '@/lib/email/client'
+import {
+  renderCompletedDocumentSignerEmail,
+  renderCompletedDocumentSenderEmail,
+} from '@/lib/email/catalog'
 
 export async function POST(
   req: Request,
@@ -214,19 +218,19 @@ export async function POST(
       content: flattenedBuffer,
     }
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
     // Email to signer
+    const signerEmailContent = renderCompletedDocumentSignerEmail({
+      documentTitle: cleanDocTitle,
+      appUrl,
+    })
+
     await sendTransactionalEmail({
       to: signer.email,
-      subject: `Your signed copy of "${cleanDocTitle}"`,
-      html: `
-        <div style="font-family: sans-serif; padding: 28px; color: #1e293b; max-width: 540px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px;">
-          <h2 style="margin-top: 0;">Your document is signed</h2>
-          <p>Thank you for completing <strong>${cleanDocTitle}</strong>.</p>
-          <p>A copy of your signed PDF is attached to this email for your records. The complete, tamper-evident activity record is archived securely.</p>
-          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-          <p style="font-size: 12px; color: #64748b;">Powered by Scribbble &bull; Simple, honest e-signatures</p>
-        </div>
-      `,
+      subject: signerEmailContent.subject,
+      html: signerEmailContent.html,
+      text: signerEmailContent.text,
       documentId: doc.id,
       template: 'completed_to_signer',
       attachments: [pdfAttachment],
@@ -235,18 +239,17 @@ export async function POST(
     // Email to sender
     if (ownerProfile?.email) {
       const signerDisplayName = signer.name || signer.email
+      const senderEmailContent = renderCompletedDocumentSenderEmail({
+        signerDisplayName,
+        documentTitle: cleanDocTitle,
+        appUrl,
+      })
+
       await sendTransactionalEmail({
         to: ownerProfile.email,
-        subject: `${signerDisplayName} completed "${cleanDocTitle}"`,
-        html: `
-          <div style="font-family: sans-serif; padding: 28px; color: #1e293b; max-width: 540px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px;">
-            <h2 style="margin-top: 0;">Document completed!</h2>
-            <p><strong>${signerDisplayName}</strong> has signed <strong>${cleanDocTitle}</strong>.</p>
-            <p>The flattened signed PDF is attached to this email and safely backed up in your Scribbble dashboard.</p>
-            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-            <p style="font-size: 12px; color: #64748b;">Powered by Scribbble &bull; Simple, honest e-signatures</p>
-          </div>
-        `,
+        subject: senderEmailContent.subject,
+        html: senderEmailContent.html,
+        text: senderEmailContent.text,
         documentId: doc.id,
         template: 'completed_to_sender',
         attachments: [pdfAttachment],

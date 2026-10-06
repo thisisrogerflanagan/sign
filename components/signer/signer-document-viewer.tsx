@@ -305,7 +305,7 @@ export function SignerDocumentViewer({
   if (declined) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]"
+        className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#FCFDFE]"
         data-testid="request-declined-card"
       >
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center space-y-4 shadow-sm animate-in fade-in">
@@ -318,6 +318,19 @@ export function SignerDocumentViewer({
             {senderDisplayName}.
           </p>
         </div>
+
+        <div className="mt-6 text-center">
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-1 px-3 rounded-full hover:bg-muted/40"
+            data-testid="signing-page-brand-link"
+          >
+            <span>Sent via</span>
+            <span className="font-semibold text-foreground">Scribbble</span>
+          </Link>
+        </div>
       </div>
     )
   }
@@ -326,7 +339,7 @@ export function SignerDocumentViewer({
   if (completed) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]"
+        className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#FCFDFE]"
         data-testid="signing-completed-card"
       >
         <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center space-y-5 shadow-sm animate-in fade-in">
@@ -352,6 +365,19 @@ export function SignerDocumentViewer({
             </div>
           )}
         </div>
+
+        <div className="mt-6 text-center">
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-1 px-3 rounded-full hover:bg-muted/40"
+            data-testid="signing-page-brand-link"
+          >
+            <span>Sent via</span>
+            <span className="font-semibold text-foreground">Scribbble</span>
+          </Link>
+        </div>
       </div>
     )
   }
@@ -359,7 +385,7 @@ export function SignerDocumentViewer({
   // Step 1: Signer Landing View
   if (step === 'landing') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#FCFDFE]">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#FCFDFE]">
         <div className="w-full max-w-lg rounded-2xl border bg-card p-8 shadow-sm space-y-6 text-center animate-in fade-in">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             <FileSignature className="h-6 w-6" />
@@ -418,6 +444,19 @@ export function SignerDocumentViewer({
           </div>
         </div>
 
+        <div className="mt-6 text-center">
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-1 px-3 rounded-full hover:bg-muted/40"
+            data-testid="signing-page-brand-link"
+          >
+            <span>Sent via</span>
+            <span className="font-semibold text-foreground">Scribbble</span>
+          </Link>
+        </div>
+
         {/* Decline Dialog */}
         <Dialog open={declineDialogOpen} onOpenChange={setDeclineDialogOpen}>
           <DialogContent>
@@ -464,6 +503,16 @@ export function SignerDocumentViewer({
           <span className="text-xs text-muted-foreground hidden sm:inline">
             &bull; Sent by {senderDisplayName}
           </span>
+          <span className="text-xs text-muted-foreground hidden md:inline">&bull;</span>
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground hidden md:inline-flex items-center gap-1 transition-colors"
+            data-testid="header-brand-link"
+          >
+            Sent via <span className="font-semibold text-foreground">Scribbble</span>
+          </Link>
         </div>
 
         {/* Progress Tracker */}
@@ -612,6 +661,19 @@ export function SignerDocumentViewer({
                 </div>
               )
             })}
+          </div>
+
+          <div className="pt-4 pb-2 text-center">
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              data-testid="viewer-brand-link"
+            >
+              <span>Sent via</span>
+              <span className="font-semibold text-foreground">Scribbble</span>
+            </Link>
           </div>
         </div>
       </main>

@@ -23,6 +23,13 @@ test.describe('Signer Journey E2E', () => {
       const reviewButton = page.locator('[data-testid="review-and-sign-button"]')
       await expect(reviewButton).toBeVisible()
 
+      // Assert Sent via Scribbble branding is displayed and links to landing page
+      const brandingLink = page.locator('[data-testid="signing-page-brand-link"]')
+      await expect(brandingLink).toBeVisible()
+      await expect(brandingLink).toHaveAttribute('href', '/')
+      await expect(brandingLink).toContainText('Sent via')
+      await expect(brandingLink).toContainText('Scribbble')
+
       // 3. Click Review & Sign Document
       await reviewButton.click()
 
@@ -62,6 +69,7 @@ test.describe('Signer Journey E2E', () => {
       const completedCard = page.locator('[data-testid="signing-completed-card"]')
       await expect(completedCard).toBeVisible({ timeout: 15000 })
       await expect(page.getByText("You're all done!")).toBeVisible()
+      await expect(page.locator('[data-testid="signing-page-brand-link"]')).toBeVisible()
 
       const downloadButton = page.locator('[data-testid="download-signed-pdf-button"]')
       await expect(downloadButton).toBeVisible()
@@ -110,6 +118,7 @@ test.describe('Signer Journey E2E', () => {
       const declinedCard = page.locator('[data-testid="request-declined-card"]')
       await expect(declinedCard).toBeVisible({ timeout: 10000 })
       await expect(page.getByText('Request declined')).toBeVisible()
+      await expect(page.locator('[data-testid="signing-page-brand-link"]')).toBeVisible()
     } finally {
       await fixture.cleanup()
     }
