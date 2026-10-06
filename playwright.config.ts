@@ -20,12 +20,6 @@ export default defineConfig({
     baseURL: BASE_URL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    launchOptions: {
-      // Newer Chromium auto-upgrades http:// navigations to https:// ("Always
-      // Use Secure Connections"). `next start` only speaks plain HTTP on
-      // localhost, so the upgrade breaks with ERR_SSL_PROTOCOL_ERROR. See #11.
-      args: ['--disable-features=HttpsUpgrades'],
-    },
   },
   projects: [
     {
