@@ -25,7 +25,7 @@ interface SendEmailParams {
 
 export async function sendTransactionalEmail(params: SendEmailParams) {
   const resend = getResendClient()
-  const fromEmail = process.env.EMAIL_FROM || 'Watchpost Sign <sign@watchposthq.com>'
+  const fromEmail = process.env.EMAIL_FROM || 'Scribbble <sign@scribbble.com>'
 
   let providerMessageId: string | null = null
 

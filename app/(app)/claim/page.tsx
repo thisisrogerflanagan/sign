@@ -38,7 +38,9 @@ export default function ClaimPage() {
           <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Sparkles className="h-5 w-5" />
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Claim your Founder access</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Claim your Founder access
+          </h1>
           <p className="text-sm text-muted-foreground">
             Enter the email address you used when purchasing your $49 lifetime license.
           </p>
@@ -75,7 +77,7 @@ export default function ClaimPage() {
             <HelpCircle className="h-3.5 w-3.5" />
             Have not purchased yet?{' '}
             <a
-              href="https://watchposthq.com"
+              href="https://scribbble.com"
               target="_blank"
               rel="noreferrer"
               className="text-primary hover:underline font-medium"

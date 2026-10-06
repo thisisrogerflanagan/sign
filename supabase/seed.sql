@@ -18,7 +18,7 @@ insert into auth.users (
 values (
   'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
   '00000000-0000-0000-0000-000000000000',
-  'founder@watchposthq.com',
+  'founder@scribbble.com',
   crypt('password123', gen_salt('bf')),
   now(),
   '{"provider":"email","providers":["email"]}',
@@ -41,7 +41,7 @@ insert into public.purchases (
 )
 values (
   'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22',
-  'founder@watchposthq.com',
+  'founder@scribbble.com',
   'pi_test_1234567890',
   4900,
   'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',

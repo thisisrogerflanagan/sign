@@ -202,13 +202,21 @@ export function SettingsClientView({
                   placeholder="e.g. Jane Doe"
                 />
                 <p className="text-[11px] text-muted-foreground">
-                  Signers will see: <span className="font-medium text-foreground">&quot;Sent by {displayName || 'Someone'}&quot;</span>
+                  Signers will see:{' '}
+                  <span className="font-medium text-foreground">
+                    &quot;Sent by {displayName || 'Someone'}&quot;
+                  </span>
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input id="email" value={userEmail} disabled className="bg-muted/50 cursor-not-allowed" />
+                <Input
+                  id="email"
+                  value={userEmail}
+                  disabled
+                  className="bg-muted/50 cursor-not-allowed"
+                />
                 <p className="text-[11px] text-muted-foreground">
                   Your primary authentication identity. Cannot be changed.
                 </p>
@@ -261,7 +269,8 @@ export function SettingsClientView({
                 Lifetime Founder ($49)
               </p>
               <p className="text-xs text-muted-foreground">
-                Active since {formatDate(entitlement.purchasedAt || new Date().toISOString())}
+                Active since{' '}
+                {formatDate(entitlement.purchasedAt || new Date().toISOString())}
               </p>
             </div>
 
@@ -288,7 +297,8 @@ export function SettingsClientView({
           <div className="rounded-xl border border-zinc-200 p-4 text-xs space-y-2 bg-background">
             <h3 className="font-semibold text-foreground">30-Day Money-Back Guarantee</h3>
             <p className="text-muted-foreground leading-relaxed">
-              If Watchpost Sign isn&apos;t a fit for your workflow within 30 days of purchase, request a full refund with no hassle.
+              If Scribbble isn&apos;t a fit for your workflow within 30 days of purchase,
+              request a full refund with no hassle.
             </p>
             <div>
               {refundStatus === 'requested' ? (
@@ -321,12 +331,18 @@ export function SettingsClientView({
               Data Export
             </h2>
             <p className="text-xs text-muted-foreground">
-              Download an archive of all your completed, signed PDFs alongside the complete CSV audit activity record.
+              Download an archive of all your completed, signed PDFs alongside the
+              complete CSV audit activity record.
             </p>
           </div>
 
           <div className="pt-2 flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              disabled={exporting}
+            >
               {exporting ? (
                 <>
                   <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
@@ -355,7 +371,9 @@ export function SettingsClientView({
               Danger Zone
             </h2>
             <p className="text-xs text-muted-foreground">
-              Permanently delete your account and all associated document data. Once confirmed, this action cannot be undone. Note that copies already emailed to signers cannot be recalled.
+              Permanently delete your account and all associated document data. Once
+              confirmed, this action cannot be undone. Note that copies already emailed to
+              signers cannot be recalled.
             </p>
           </div>
 
@@ -377,11 +395,16 @@ export function SettingsClientView({
           <DialogHeader>
             <DialogTitle>Request a full refund?</DialogTitle>
             <DialogDescription>
-              We will process your $49 refund via Stripe. Your license and access to Watchpost Sign will be deactivated once refunded.
+              We will process your $49 refund via Stripe. Your license and access to
+              Scribbble will be deactivated once refunded.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRefundDialogOpen(false)} disabled={refunding}>
+            <Button
+              variant="outline"
+              onClick={() => setRefundDialogOpen(false)}
+              disabled={refunding}
+            >
               Cancel
             </Button>
             <Button onClick={handleRequestRefund} disabled={refunding}>
@@ -397,7 +420,12 @@ export function SettingsClientView({
           <DialogHeader>
             <DialogTitle>Delete your account permanently?</DialogTitle>
             <DialogDescription>
-              This will immediately delete all your documents, templates, and storage files. To confirm, please type <span className="font-semibold text-foreground">&quot;delete my account&quot;</span> below.
+              This will immediately delete all your documents, templates, and storage
+              files. To confirm, please type{' '}
+              <span className="font-semibold text-foreground">
+                &quot;delete my account&quot;
+              </span>{' '}
+              below.
             </DialogDescription>
           </DialogHeader>
           <div className="py-2">
@@ -408,13 +436,19 @@ export function SettingsClientView({
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleting}
+            >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteAccount}
-              disabled={deleteConfirmation.toLowerCase() !== 'delete my account' || deleting}
+              disabled={
+                deleteConfirmation.toLowerCase() !== 'delete my account' || deleting
+              }
             >
               {deleting ? 'Deleting account...' : 'Permanently delete account'}
             </Button>

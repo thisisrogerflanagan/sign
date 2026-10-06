@@ -25,7 +25,7 @@ export function GettingStartedCard({ hasDocuments }: { hasDocuments: boolean }) 
       </div>
 
       <p className="text-muted-foreground leading-relaxed">
-        Watchpost Sign lets you get PDFs signed without accounts, subscriptions, or complexity.
+        Scribbble lets you get PDFs signed without accounts, subscriptions, or complexity.
       </p>
 
       <div className="space-y-1.5 pt-1">

@@ -67,7 +67,7 @@ function LoginForm() {
         <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Mail className="h-5 w-5" />
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">Sign in to Watchpost</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Sign in to Scribbble</h1>
         <p className="text-sm text-muted-foreground">
           No passwords to remember. We will email you a secure one-click sign in link.
         </p>

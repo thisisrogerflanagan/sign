@@ -31,7 +31,8 @@ export async function POST(req: Request) {
     const zip = new JSZip()
 
     // 3. Generate CSV of audit events
-    let csvContent = 'id,document_id,event_type,actor_type,actor_email,ip_address,created_at\n'
+    let csvContent =
+      'id,document_id,event_type,actor_type,actor_email,ip_address,created_at\n'
     if (auditEvents) {
       auditEvents.forEach((ev: any) => {
         csvContent += `"${ev.id}","${ev.document_id}","${ev.event_type}","${ev.actor_type}","${ev.actor_email || ''}","${ev.ip_address || ''}","${ev.created_at}"\n`
@@ -60,7 +61,7 @@ export async function POST(req: Request) {
     const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' })
 
     // 5. Upload zip to storage temp path
-    const zipPath = `${user.id}/exports/watchpost_export_${Date.now()}.zip`
+    const zipPath = `${user.id}/exports/scribbble_export_${Date.now()}.zip`
     await admin.storage.from('signed').upload(zipPath, zipBuffer, {
       contentType: 'application/zip',
       upsert: true,
@@ -77,7 +78,7 @@ export async function POST(req: Request) {
     if (downloadUrl && user.email) {
       await sendTransactionalEmail({
         to: user.email,
-        subject: 'Your Watchpost Sign data export is ready',
+        subject: 'Your Scribbble data export is ready',
         html: `
           <div style="font-family: sans-serif; padding: 24px; color: #1e293b;">
             <h2>Your data export is ready</h2>

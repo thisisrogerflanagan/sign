@@ -33,7 +33,7 @@ export async function claimFounderPurchase(formData: FormData) {
   if (purchaseError || !purchase) {
     return {
       error:
-        'We could not find a completed $49 founder purchase for that email. If you recently paid or used a different email, please contact support@watchposthq.com.',
+        'We could not find a completed $49 founder purchase for that email. If you recently paid or used a different email, please contact support@scribbble.com.',
     }
   }
 
@@ -48,7 +48,9 @@ export async function claimFounderPurchase(formData: FormData) {
 
   if (entitlementError) {
     console.error('Failed to create entitlement:', entitlementError)
-    return { error: 'Failed to claim your license. Please try again or reach out to support.' }
+    return {
+      error: 'Failed to claim your license. Please try again or reach out to support.',
+    }
   }
 
   // Mark purchase as claimed

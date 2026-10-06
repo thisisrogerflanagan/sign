@@ -11,7 +11,7 @@ test.describe('Auth Magic Link Flow', () => {
     baseURL,
   }) => {
     const admin = createAdminClient()
-    const email = 'test-e2e@watchpost.test'
+    const email = 'test-e2e@scribbble.test'
 
     // Generate real magic link via Supabase admin API
     const { data, error } = await admin.auth.admin.generateLink({
@@ -101,7 +101,7 @@ test.describe('Sender Journey Flow', () => {
       // Fill recipient details
       const emailInput = page.locator('[data-testid="signer-email-input"]')
       await expect(emailInput).toBeVisible()
-      await emailInput.fill('client.automated@watchpost.test')
+      await emailInput.fill('client.automated@scribbble.test')
 
       const nameInput = page.locator('[data-testid="signer-name-input"]')
       await nameInput.fill('Client Test Recipient')

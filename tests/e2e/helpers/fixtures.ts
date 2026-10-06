@@ -32,10 +32,10 @@ export async function createTestDocumentFixture(options: FixtureOptions = {}) {
   const isTest = options.isTest !== undefined ? options.isTest : true
   const signerName =
     options.signerName !== undefined ? options.signerName : 'Automated Test Signer'
-  const signerEmail = options.signerEmail || 'robot-signer@watchpost.test'
+  const signerEmail = options.signerEmail || 'robot-signer@scribbble.test'
 
   // Ensure owner user exists
-  const ownerEmail = 'test-e2e@watchpost.test'
+  const ownerEmail = 'test-e2e@scribbble.test'
   const { data: usersData } = await admin.auth.admin.listUsers()
   let owner = usersData?.users.find((u) => u.email === ownerEmail)
   if (!owner) {

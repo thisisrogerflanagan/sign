@@ -10,9 +10,10 @@ export default function WelcomePage() {
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-700">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome to Watchpost Sign</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome to Scribbble</h1>
           <p className="text-muted-foreground text-sm max-w-md mx-auto">
-            Your $49 Founder License is active. You have lifetime access with a generous 50 signature requests per month fair-use limit.
+            Your $49 Founder License is active. You have lifetime access with a generous
+            50 signature requests per month fair-use limit.
           </p>
         </div>
 
@@ -29,7 +30,9 @@ export default function WelcomePage() {
               <div>
                 <p className="text-sm font-medium">Send yourself a test request</p>
                 <p className="text-xs text-muted-foreground">
-                  Experience the signer flow firsthand with zero account creation required. Test sends are free and do not count toward your monthly quota.
+                  Experience the signer flow firsthand with zero account creation
+                  required. Test sends are free and do not count toward your monthly
+                  quota.
                 </p>
               </div>
             </div>
@@ -41,7 +44,8 @@ export default function WelcomePage() {
               <div>
                 <p className="text-sm font-medium">Set your signer display name</p>
                 <p className="text-xs text-muted-foreground">
-                  Let recipients know who is sending the document by checking your profile settings.
+                  Let recipients know who is sending the document by checking your profile
+                  settings.
                 </p>
               </div>
             </div>
@@ -51,9 +55,12 @@ export default function WelcomePage() {
                 3
               </div>
               <div>
-                <p className="text-sm font-medium">Relax with our tamper-evident audit record</p>
+                <p className="text-sm font-medium">
+                  Relax with our tamper-evident audit record
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  Every view and signature is recorded with exact server timestamps, IP addresses, and hash verifications.
+                  Every view and signature is recorded with exact server timestamps, IP
+                  addresses, and hash verifications.
                 </p>
               </div>
             </div>

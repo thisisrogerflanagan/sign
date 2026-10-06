@@ -21,12 +21,15 @@ export async function POST(req: Request) {
       .eq('user_id', user.id)
 
     if (updateError) {
-      return NextResponse.json({ error: 'Failed to record refund request' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Failed to record refund request' },
+        { status: 500 }
+      )
     }
 
     // 2. Notify support inbox
     await sendTransactionalEmail({
-      to: 'support@watchposthq.com',
+      to: 'support@scribbble.com',
       subject: `Refund Requested: ${user.email}`,
       html: `
         <div style="font-family: sans-serif; padding: 24px;">

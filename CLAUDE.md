@@ -1,4 +1,4 @@
-# PROJECT CONTEXT - Watchpost Sign
+# PROJECT CONTEXT - Scribbble
 
 Stack: Next.js (App Router, TypeScript) on Vercel; Supabase (Postgres,
 Auth magic links, private Storage) as backend; Resend for transactional
@@ -11,6 +11,7 @@ in browser with NO account via a tokenized link. Both parties get the
 signed PDF by email. $49 lifetime plan, 50 sends/month fair-use cap.
 
 ## Non-negotiables:
+
 - App Router only. Server Components by default.
 - Service-role Supabase key is server-only, never in client code.
 - Signer access via 256-bit token in URL; store only SHA-256 hash.
@@ -25,5 +26,6 @@ signed PDF by email. $49 lifetime plan, 50 sends/month fair-use cap.
   never names, emails, titles, or document content).
 
 ## Copy tone:
+
 - Warm, plain-spoken, human (Airbnb-style). No legalese in UI.
 - The audit trail is called the "activity record" in user-facing copy.

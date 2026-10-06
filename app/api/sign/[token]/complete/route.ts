@@ -224,7 +224,7 @@ export async function POST(
           <p>Thank you for completing <strong>${cleanDocTitle}</strong>.</p>
           <p>A copy of your signed PDF is attached to this email for your records. The complete, tamper-evident activity record is archived securely.</p>
           <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-          <p style="font-size: 12px; color: #64748b;">Powered by Watchpost Sign &bull; Simple, honest e-signatures</p>
+          <p style="font-size: 12px; color: #64748b;">Powered by Scribbble &bull; Simple, honest e-signatures</p>
         </div>
       `,
       documentId: doc.id,
@@ -242,9 +242,9 @@ export async function POST(
           <div style="font-family: sans-serif; padding: 28px; color: #1e293b; max-width: 540px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px;">
             <h2 style="margin-top: 0;">Document completed!</h2>
             <p><strong>${signerDisplayName}</strong> has signed <strong>${cleanDocTitle}</strong>.</p>
-            <p>The flattened signed PDF is attached to this email and safely backed up in your Watchpost dashboard.</p>
+            <p>The flattened signed PDF is attached to this email and safely backed up in your Scribbble dashboard.</p>
             <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-            <p style="font-size: 12px; color: #64748b;">Powered by Watchpost Sign &bull; Simple, honest e-signatures</p>
+            <p style="font-size: 12px; color: #64748b;">Powered by Scribbble &bull; Simple, honest e-signatures</p>
           </div>
         `,
         documentId: doc.id,

@@ -1405,7 +1405,7 @@ export default function FieldEditorPage({ params }: { params: Promise<{ id: stri
               Document Version History
             </DialogTitle>
             <DialogDescription>
-              Watchpost Sign retains immutable original and working draft snapshots for
+              Scribbble retains immutable original and working draft snapshots for
               tamper-evidence.
             </DialogDescription>
           </DialogHeader>

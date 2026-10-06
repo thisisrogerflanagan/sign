@@ -40,11 +40,7 @@ export function renderSignatureRequestEmail({
     <h1>${senderName} requested your signature</h1>
     <p>Please review and sign <strong>${documentTitle}</strong>. No account or password is required.</p>
     
-    ${
-      senderMessage
-        ? `<div class="message-box">"${senderMessage}"</div>`
-        : ''
-    }
+    ${senderMessage ? `<div class="message-box">"${senderMessage}"</div>` : ''}
 
     <div style="text-align: center; margin: 24px 0;">
       <a href="${signingUrl}" class="btn">Review and Sign Document</a>
@@ -56,7 +52,7 @@ export function renderSignatureRequestEmail({
     </p>
 
     <div class="footer">
-      Sent securely via Watchpost Sign. Single-use link expires in 90 days.
+      Sent securely via Scribbble. Single-use link expires in 90 days.
     </div>
   </div>
 </body>
@@ -70,7 +66,7 @@ ${senderMessage ? `Message: "${senderMessage}"\n` : ''}
 Review and sign here (no account needed):
 ${signingUrl}
 
-Link expires in 90 days. Sent securely via Watchpost Sign.
+Link expires in 90 days. Sent securely via Scribbble.
 `
 
   return { subject, html, text }

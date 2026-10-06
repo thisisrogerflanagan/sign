@@ -6,7 +6,7 @@ import { NetworkStatusBanner } from '@/components/network-status-banner'
 import { DevToolbar } from '@/components/dev/dev-toolbar'
 
 export const metadata: Metadata = {
-  title: 'Watchpost Sign — Simple, Honest E-Signatures',
+  title: 'Scribbble — Simple, Honest E-Signatures',
   description: 'Single-user e-signature tool with lifetime pricing and fair-use terms.',
 }
 

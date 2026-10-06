@@ -63,7 +63,7 @@ export async function POST(
             <h2>Signature Request Declined</h2>
             <p><strong>${signerName}</strong> (${context.signer.email}) chose not to sign <strong>${context.document.title}</strong>.</p>
             ${reason ? `<p><em>Reason: "${reason}"</em></p>` : ''}
-            <p>You can review this request in your Watchpost dashboard.</p>
+            <p>You can review this request in your Scribbble dashboard.</p>
           </div>
         `,
         documentId: context.document.id,

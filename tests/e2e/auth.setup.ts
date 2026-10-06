@@ -7,7 +7,7 @@ const authFile = 'tests/.auth/user.json'
 
 setup('authenticate test user', async ({ page, baseURL }) => {
   const admin = createAdminClient()
-  const email = 'test-e2e@watchpost.test'
+  const email = 'test-e2e@scribbble.test'
 
   // Ensure test user exists
   const { data: usersData } = await admin.auth.admin.listUsers()

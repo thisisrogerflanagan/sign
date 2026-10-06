@@ -309,7 +309,7 @@ test.describe('Automated Screenshot Capture ("Robot Clicker")', () => {
 
     test('capture sender home feed empty state', async ({ browser }) => {
       const admin = createAdminClient()
-      const emptyUserEmail = 'test-empty-feed@watchpost.test'
+      const emptyUserEmail = 'test-empty-feed@scribbble.test'
 
       const { data: usersData } = await admin.auth.admin.listUsers()
       let emptyUser = usersData?.users.find((u) => u.email === emptyUserEmail)
@@ -498,7 +498,7 @@ test.describe('Automated Screenshot Capture ("Robot Clicker")', () => {
         {
           document_id: fixture.document.id,
           actor_type: 'sender',
-          actor_email: 'test-e2e@watchpost.test',
+          actor_email: 'test-e2e@scribbble.test',
           event_type: 'document_created',
           ip_address: '198.51.100.1',
           user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
@@ -507,7 +507,7 @@ test.describe('Automated Screenshot Capture ("Robot Clicker")', () => {
         {
           document_id: fixture.document.id,
           actor_type: 'sender',
-          actor_email: 'test-e2e@watchpost.test',
+          actor_email: 'test-e2e@scribbble.test',
           event_type: 'document_sent',
           ip_address: '198.51.100.1',
           user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
