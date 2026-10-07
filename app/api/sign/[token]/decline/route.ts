@@ -32,6 +32,16 @@ export async function POST(
       })
       .eq('id', context.document.id)
 
+    // Insert "declined" notification to owner (#24)
+    const signerDisplayName = context.signer.name || context.signer.email
+    await admin.from('notifications').insert({
+      user_id: context.document.owner_id,
+      document_id: context.document.id,
+      type: 'declined',
+      title: 'Document declined',
+      body: `${signerDisplayName} declined to sign "${context.document.title || 'Document'}".`,
+    })
+
     // 2. Audit event
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || null
     const userAgent = req.headers.get('user-agent') || null

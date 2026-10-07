@@ -183,3 +183,42 @@ Sent via Scribbble — e-signatures with a one-time payment: ${appUrl}
 `
   return { subject, html, text }
 }
+
+export function renderReminderDueEmail({
+  documentTitle,
+  note,
+  documentUrl,
+  recipientName,
+  appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+}: {
+  documentTitle: string
+  note?: string | null
+  documentUrl: string
+  recipientName?: string
+  appUrl?: string
+}) {
+  const cleanDocTitle = documentTitle || 'Document'
+  const subject = `Reminder: Follow up on "${cleanDocTitle}"`
+  const html = `
+    <div style="font-family: sans-serif; padding: 28px; color: #1e293b; max-width: 540px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px;">
+      <h2 style="margin-top: 0;">Reminder: Follow up on document</h2>
+      <p>Hello${recipientName ? ` ${recipientName}` : ''},</p>
+      <p>This is your scheduled reminder to follow up on <strong>${cleanDocTitle}</strong>.</p>
+      ${note ? `<div style="background: #f8fafc; border-left: 3px solid #cbd5e1; padding: 12px 16px; margin: 16px 0; font-size: 14px; font-style: italic; color: #334155;">"${note}"</div>` : ''}
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${documentUrl}" style="background: #0f172a; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; display: inline-block;">View Document</a>
+      </div>
+      <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+      <p style="font-size: 12px; color: #64748b; margin: 0;"><a href="${appUrl}" style="color: #64748b; text-decoration: underline;">Sent via Scribbble — e-signatures with a one-time payment</a></p>
+    </div>
+  `
+  const text = `Reminder: Follow up on "${cleanDocTitle}"
+
+This is your scheduled reminder to follow up on ${cleanDocTitle}.
+${note ? `Note: "${note}"\n` : ''}
+View document: ${documentUrl}
+
+Sent via Scribbble — e-signatures with a one-time payment: ${appUrl}
+`
+  return { subject, html, text }
+}

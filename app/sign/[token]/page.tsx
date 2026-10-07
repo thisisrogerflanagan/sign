@@ -156,10 +156,10 @@ export default async function SignerPage(props: SignerPageProps) {
   const ip = headerStore.get('x-forwarded-for')?.split(',')[0] || null
   const userAgent = headerStore.get('user-agent') || null
 
-  if (doc.status === 'sent') {
-    const admin = createAdminClient()
-    const nowIso = new Date().toISOString()
+  const admin = createAdminClient()
+  const nowIso = new Date().toISOString()
 
+  if (doc.status === 'sent') {
     await admin
       .from('documents')
       .update({
@@ -180,6 +180,28 @@ export default async function SignerPage(props: SignerPageProps) {
     await captureServerEvent(doc.owner_id, {
       name: 'document_viewed_by_signer',
       properties: { document_id: doc.id },
+    })
+  }
+
+  // Insert "viewed" notification, first view per signer per document only (#24)
+  const { data: existingViewed } = await admin
+    .from('notifications')
+    .select('id')
+    .eq('document_id', doc.id)
+    .eq('type', 'viewed')
+    .ilike('body', `%${signer.email}%`)
+    .maybeSingle()
+
+  if (!existingViewed) {
+    const signerDisplayName = signer.name
+      ? `${signer.name} (${signer.email})`
+      : signer.email
+    await admin.from('notifications').insert({
+      user_id: doc.owner_id,
+      document_id: doc.id,
+      type: 'viewed',
+      title: 'Document viewed',
+      body: `${signerDisplayName} viewed "${doc.title || 'Untitled Document'}".`,
     })
   }
 

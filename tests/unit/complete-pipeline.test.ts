@@ -44,9 +44,26 @@ const mockOriginalsDownload = vi.fn()
 const mockSignedUpload = vi.fn()
 const mockSignedCreateSignedUrl = vi.fn()
 
+const mockNotificationInsert = vi.fn().mockResolvedValue({ data: null, error: null })
+const mockReminderUpdate = vi.fn().mockReturnValue({
+  eq: vi.fn().mockReturnValue({
+    eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+  }),
+})
+
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: vi.fn(() => ({
     from: (table: string) => {
+      if (table === 'notifications') {
+        return {
+          insert: mockNotificationInsert,
+        }
+      }
+      if (table === 'reminders') {
+        return {
+          update: mockReminderUpdate,
+        }
+      }
       if (table === 'documents') {
         return {
           update: (payload: any) => {

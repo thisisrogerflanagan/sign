@@ -183,6 +183,32 @@ export async function POST(
       )
     }
 
+    const signerDisplayName = signer.name || signer.email
+    const cleanDocTitle = doc.title || 'Document'
+
+    // Notifications & auto-complete pending reminders (#24)
+    await admin.from('notifications').insert({
+      user_id: doc.owner_id,
+      document_id: doc.id,
+      type: 'signed',
+      title: 'Document signed',
+      body: `${signerDisplayName} signed "${cleanDocTitle}".`,
+    })
+
+    await admin.from('notifications').insert({
+      user_id: doc.owner_id,
+      document_id: doc.id,
+      type: 'completed',
+      title: 'Document completed',
+      body: `All signers have signed "${cleanDocTitle}".`,
+    })
+
+    await admin
+      .from('reminders')
+      .update({ status: 'completed' })
+      .eq('document_id', doc.id)
+      .eq('status', 'pending')
+
     // 5. Write audit events (with IP & UA)
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || null
     const userAgent = req.headers.get('user-agent') || null
@@ -212,7 +238,6 @@ export async function POST(
     })
 
     // 7. Send completion emails with PDF attached
-    const cleanDocTitle = doc.title || 'Document'
     const pdfAttachment = {
       filename: `${cleanDocTitle.replace(/[^a-zA-Z0-9_-]/g, '_')}_signed.pdf`,
       content: flattenedBuffer,

@@ -27,6 +27,11 @@ export type AuditEventType =
   | 'document_deleted'
   | 'signed_pdf_downloaded'
 
+export type NotificationType =
+  'viewed' | 'signed' | 'completed' | 'declined' | 'time_sensitive' | 'reminder_due'
+
+export type ReminderStatus = 'pending' | 'fired' | 'cancelled' | 'completed'
+
 export interface Database {
   public: {
     Tables: {
@@ -324,6 +329,67 @@ export interface Database {
           to_email?: string
           template?: string
           provider_message_id?: string | null
+          created_at?: string
+        }
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          document_id: string | null
+          type: string
+          title: string
+          body: string
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          document_id?: string | null
+          type: string
+          title: string
+          body: string
+          read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          document_id?: string | null
+          type?: string
+          title?: string
+          body?: string
+          read_at?: string | null
+          created_at?: string
+        }
+      }
+      reminders: {
+        Row: {
+          id: string
+          user_id: string
+          document_id: string
+          remind_at: string
+          note: string | null
+          status: ReminderStatus
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          document_id: string
+          remind_at: string
+          note?: string | null
+          status?: ReminderStatus
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          document_id?: string
+          remind_at?: string
+          note?: string | null
+          status?: ReminderStatus
           created_at?: string
         }
       }

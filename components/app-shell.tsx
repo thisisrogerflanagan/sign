@@ -18,6 +18,22 @@ interface AppShellProps {
 export function AppShell({ sidebar, children, documents }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  React.useEffect(() => {
+    async function checkUnread() {
+      try {
+        const res = await fetch('/api/notifications')
+        if (res.ok) {
+          const data = await res.json()
+          setUnreadCount(data.unreadCount || 0)
+        }
+      } catch {
+        // non-fatal
+      }
+    }
+    checkUnread()
+  }, [])
 
   const superellipseStyle: React.CSSProperties = {
     borderRadius: '10px',
@@ -58,17 +74,30 @@ export function AppShell({ sidebar, children, documents }: AppShellProps) {
               onClick={() => setNotificationsOpen((prev) => !prev)}
               aria-label="Notifications"
               title="Notifications"
-              className={`flex items-center justify-center p-[4px] transition-colors hover:bg-[rgba(26,28,30,0.04)] active:scale-95 ${
+              className={`relative flex items-center justify-center p-[4px] transition-colors hover:bg-[rgba(26,28,30,0.04)] active:scale-95 ${
                 notificationsOpen ? 'bg-[rgba(26,28,30,0.06)]' : ''
               }`}
               style={superellipseStyle}
             >
-              <img src="/icons/notification.svg" alt="Notifications" className="h-[20px] w-[20px]" />
+              <img
+                src="/icons/notification.svg"
+                alt="Notifications"
+                className="h-[20px] w-[20px]"
+              />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex min-w-[16px] h-4 px-1 items-center justify-center rounded-full bg-[#E5484D] text-[10px] font-bold text-white shadow-xs pointer-events-none">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
 
             {/* Notification Popup Window */}
             {notificationsOpen && (
-              <NotificationPopup onClose={() => setNotificationsOpen(false)} />
+              <NotificationPopup
+                onClose={() => setNotificationsOpen(false)}
+                onUnreadCountChange={setUnreadCount}
+                documents={documents}
+              />
             )}
           </div>
 
@@ -110,9 +139,7 @@ export function AppShell({ sidebar, children, documents }: AppShellProps) {
               : 'w-0 opacity-0 -translate-x-full pointer-events-none'
           }`}
         >
-          <div className="w-[268px] h-full overflow-y-auto">
-            {sidebar}
-          </div>
+          <div className="w-[268px] h-full overflow-y-auto">{sidebar}</div>
         </div>
 
         {/* Center Content Area */}

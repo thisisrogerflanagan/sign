@@ -5,6 +5,7 @@ import {
   renderCompletedDocumentSenderEmail,
   renderReceiptEmail,
   renderClaimInviteEmail,
+  renderReminderDueEmail,
 } from '@/lib/email/catalog'
 
 describe('Email Catalog - Sent via Scribbble Branding (#18)', () => {
@@ -101,6 +102,30 @@ describe('Email Catalog - Sent via Scribbble Branding (#18)', () => {
       })
       expect(email.subject).toContain('Claim your Scribbble Founder License')
       expect(email.html).toContain('https://scribbble.com/claim?token=abc')
+    })
+  })
+
+  describe('renderReminderDueEmail', () => {
+    it('renders reminder due email with note, link, and branding footer', () => {
+      const email = renderReminderDueEmail({
+        documentTitle: 'Investment Term Sheet',
+        note: 'Check if they signed before 5pm',
+        documentUrl: 'https://scribbble.com/documents/doc_123',
+        recipientName: 'Alice',
+        appUrl,
+      })
+
+      expect(email.subject).toBe('Reminder: Follow up on "Investment Term Sheet"')
+      expect(email.html).toContain('Check if they signed before 5pm')
+      expect(email.html).toContain('href="https://scribbble.com/documents/doc_123"')
+      expect(email.html).toContain('Hello Alice')
+      expect(email.html).toContain(
+        'Sent via Scribbble — e-signatures with a one-time payment'
+      )
+      expect(email.text).toContain('https://scribbble.com/documents/doc_123')
+      expect(email.text).toContain(
+        `Sent via Scribbble — e-signatures with a one-time payment: ${appUrl}`
+      )
     })
   })
 })
