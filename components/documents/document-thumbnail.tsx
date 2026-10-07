@@ -12,6 +12,11 @@ interface DocumentThumbnailProps {
 const thumbnailMemoryCache = new Map<string, string>()
 const CACHE_PREFIX = 'thumb_hd_v2_'
 
+export const THUMBNAIL_CARD_STYLE: React.CSSProperties = {
+  boxShadow:
+    '0px 1px 1px 0px rgba(0, 0, 0, 0.04), 0px 3px 3px 0px rgba(0, 0, 0, 0.04), 0px 6px 4px 0px rgba(0, 0, 0, 0.02), 0px 11px 4px 0px rgba(0, 0, 0, 0.01), 0px 17px 5px 0px rgba(0, 0, 0, 0.00), 0px 0px 0px 1px rgba(0, 0, 0, 0.03)',
+}
+
 export function DocumentThumbnail({ documentId, title }: DocumentThumbnailProps) {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(() => {
     return thumbnailMemoryCache.get(documentId) || null
@@ -106,10 +111,7 @@ export function DocumentThumbnail({ documentId, title }: DocumentThumbnailProps)
 
   return (
     <div
-      style={{
-        boxShadow:
-          '0px 1px 1px 0px rgba(0, 0, 0, 0.04), 0px 3px 3px 0px rgba(0, 0, 0, 0.04), 0px 6px 4px 0px rgba(0, 0, 0, 0.02), 0px 11px 4px 0px rgba(0, 0, 0, 0.01), 0px 17px 5px 0px rgba(0, 0, 0, 0.00), 0px 0px 0px 1px rgba(0, 0, 0, 0.03)',
-      }}
+      style={THUMBNAIL_CARD_STYLE}
       className="w-[32px] h-[38px] rounded-[4px] bg-white overflow-hidden shrink-0 flex items-center justify-center relative select-none border border-black/[0.04]"
     >
       {thumbnailUrl ? (

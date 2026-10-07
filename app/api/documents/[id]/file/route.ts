@@ -2,10 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: documentId } = await params
     const supabase = await createClient()
@@ -21,13 +18,18 @@ export async function GET(
     // Verify document ownership
     const { data: document, error: docError } = await supabase
       .from('documents')
-      .select('id, owner_id, storage_path_original, title, created_at, updated_at, status')
+      .select(
+        'id, owner_id, storage_path_original, title, created_at, updated_at, status, page_count'
+      )
       .eq('id', documentId)
       .eq('owner_id', user.id)
       .single()
 
     if (docError || !document || !document.storage_path_original) {
-      return NextResponse.json({ error: 'Document not found or inaccessible' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Document not found or inaccessible' },
+        { status: 404 }
+      )
     }
 
     // Fetch author profile
@@ -37,6 +39,12 @@ export async function GET(
       .eq('id', user.id)
       .single()
 
+    // Fetch document signers
+    const { data: signers } = await supabase
+      .from('signers')
+      .select('id, name, email')
+      .eq('document_id', documentId)
+
     // Mint short-lived signed URL (60s for viewing)
     const admin = createAdminClient()
     const { data: signedData, error: signError } = await admin.storage
@@ -45,7 +53,10 @@ export async function GET(
 
     if (signError || !signedData) {
       console.error('Failed to create signed URL:', signError)
-      return NextResponse.json({ error: 'Could not access document file' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Could not access document file' },
+        { status: 500 }
+      )
     }
 
     const authorName =
@@ -60,7 +71,9 @@ export async function GET(
       createdAt: document.created_at,
       updatedAt: document.updated_at || document.created_at,
       status: document.status || 'draft',
+      pageCount: document.page_count,
       author: authorName,
+      signers: signers || [],
     })
   } catch (err: any) {
     console.error('Error in document file route:', err)
