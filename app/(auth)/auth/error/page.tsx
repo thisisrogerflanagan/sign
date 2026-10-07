@@ -1,11 +1,11 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { AlertTriangle, ArrowLeft } from "lucide-react"
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { AlertTriangle, ArrowLeft } from 'lucide-react'
 
 export default function AuthErrorPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-[#FCFDFE]">
-      <div className="w-full max-w-sm rounded-xl border bg-card p-8 shadow-sm text-center">
+      <div className="w-full max-w-sm glass-container p-8 text-center">
         <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
           <AlertTriangle className="h-5 w-5" />
         </div>

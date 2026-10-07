@@ -62,7 +62,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-sm rounded-xl border bg-card p-8 shadow-sm">
+    <div className="w-full max-w-sm glass-container p-8">
       <div className="mb-6 space-y-1.5 text-center">
         <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Mail className="h-5 w-5" />

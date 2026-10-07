@@ -33,7 +33,7 @@ export default function ClaimPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-[#FCFDFE]">
-      <div className="w-full max-w-md rounded-xl border bg-card p-8 shadow-sm">
+      <div className="w-full max-w-md glass-container p-8">
         <div className="mb-6 space-y-1.5 text-center">
           <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Sparkles className="h-5 w-5" />

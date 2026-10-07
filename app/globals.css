@@ -143,6 +143,19 @@
   }
 }
 
+@layer utilities {
+  .glass-container {
+    box-shadow:
+      rgba(0, 0, 0, 0.1) -8px 20px 48px 0px,
+      rgba(0, 0, 0, 0.09) 0px 0px 0px 1px,
+      rgb(255, 255, 255) 0px 0px 0px 1px inset;
+    background: rgba(255, 255, 255, 0.32);
+    backdrop-filter: blur(100px);
+    -webkit-backdrop-filter: blur(100px);
+    border-radius: 32px;
+  }
+}
+
 .cta-squircle-button,
 .add-doc-button {
   width: 40px;
