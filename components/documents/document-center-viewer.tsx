@@ -11,13 +11,20 @@ import {
   FileText,
   Loader2,
   AlertCircle,
+  Clock,
+  Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { THUMBNAIL_CARD_STYLE } from '@/components/documents/document-thumbnail'
+import { getStatusBadgeInfo, formatDate } from '@/lib/document-helpers'
+import { DocumentStatus } from '@/lib/supabase/types'
 
 export interface DocumentCenterViewerProps {
   documentId: string
   title: string
+  status?: DocumentStatus
+  createdAt?: string
+  isTest?: boolean
   pageCount?: number | null
   pdfUrl?: string | null
   downloadUrl?: string | null
@@ -26,6 +33,9 @@ export interface DocumentCenterViewerProps {
 export function DocumentCenterViewer({
   documentId,
   title,
+  status = 'sent',
+  createdAt,
+  isTest = false,
   pageCount = 1,
   pdfUrl,
   downloadUrl,
@@ -40,6 +50,8 @@ export function DocumentCenterViewer({
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const renderTaskRef = useRef<any>(null)
   const pdfDocRef = useRef<any>(null)
+
+  const badge = getStatusBadgeInfo(status)
 
   // 1. Fetch PDF URL if not directly supplied
   useEffect(() => {
@@ -125,7 +137,6 @@ export function DocumentCenterViewer({
 
     async function renderPage() {
       try {
-        // Cancel existing page render task if any
         if (renderTaskRef.current) {
           try {
             renderTaskRef.current.cancel()
@@ -138,7 +149,6 @@ export function DocumentCenterViewer({
         if (isCancelled || !canvasRef.current) return
 
         const unscaledViewport = page.getViewport({ scale: 1.0 })
-        // High-DPI target resolution matching #23 All docs thumbnail style
         const targetWidth = 820 * scale
         const renderScale = Math.max(targetWidth / unscaledViewport.width, 1.0)
         const viewport = page.getViewport({ scale: renderScale })
@@ -185,94 +195,125 @@ export function DocumentCenterViewer({
 
   return (
     <div
-      className="w-full flex-1 min-w-0 flex flex-col items-center justify-start bg-zinc-100/70 rounded-2xl border border-black/[0.04] p-4 sm:p-6 overflow-auto relative min-h-[600px] h-full"
+      className="w-full flex-1 min-w-0 flex flex-col items-center justify-start relative min-h-[700px] h-full"
       data-testid="center-pdf-column"
     >
-      {/* Top Floating Controls Toolbar */}
-      <div
-        className="flex items-center gap-3 bg-background/95 backdrop-blur-sm rounded-full border px-4 py-1.5 shadow-sm text-xs sticky top-0 z-20 mb-6"
-        data-testid="pdf-controls-toolbar"
-      >
-        {/* Page Navigation */}
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            disabled={currentPage <= 1 || loading}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            title="Previous page"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="font-medium text-foreground px-1 select-none">
-            {`Page ${currentPage} of ${numPages}`}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            disabled={currentPage >= numPages || loading}
-            onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
-            title="Next page"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="h-4 w-px bg-border" />
-
-        {/* Zoom Controls */}
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            disabled={scale <= 0.6 || loading}
-            onClick={() => setScale((s) => Math.max(0.6, Number((s - 0.15).toFixed(2))))}
-            title="Zoom out"
-          >
-            <ZoomOut className="h-3.5 w-3.5" />
-          </Button>
-          <span className="w-12 text-center text-muted-foreground font-medium select-none">
-            {Math.round(scale * 100)}%
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            disabled={scale >= 2.0 || loading}
-            onClick={() => setScale((s) => Math.min(2.0, Number((s + 0.15).toFixed(2))))}
-            title="Zoom in"
-          >
-            <ZoomIn className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-
-        {/* Download / Open PDF Action */}
-        {activeDownloadUrl && (
-          <>
-            <div className="h-4 w-px bg-border" />
-            <a
-              href={activeDownloadUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground text-xs font-medium px-2 py-1 rounded-md hover:bg-muted transition-colors"
-              title="Open or download PDF"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              <span>Open PDF</span>
-            </a>
-          </>
-        )}
-      </div>
-
-      {/* PDF Document Paper Container matching #23 All docs thumbnail style */}
+      {/* Floating Center Document Sheet (Craft Paper Canvas) */}
       <div
         style={THUMBNAIL_CARD_STYLE}
-        className="w-full max-w-3xl bg-white rounded-[4px] border border-black/[0.04] p-2 sm:p-4 shadow-sm overflow-hidden select-none flex flex-col items-center justify-center relative min-h-[500px]"
+        className="w-full max-w-4xl bg-white rounded-2xl sm:rounded-3xl border border-black/[0.04] p-6 sm:p-10 shadow-sm flex flex-col items-center justify-start relative min-h-[650px]"
         data-testid="pdf-paper-card"
       >
+        {/* Craft "Page Title" & Header inside the sheet */}
+        <div className="w-full border-b border-zinc-100 pb-6 mb-6 space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground/90">
+              {title || 'Page Title'}
+            </h1>
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${badge.color}`}
+              >
+                {badge.label}
+              </span>
+              {isTest && (
+                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 border">
+                  Test Request
+                </span>
+              )}
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground font-medium">
+            {createdAt ? `Created ${formatDate(createdAt)}` : ''} &bull; {numPages} page
+            {numPages === 1 ? '' : 's'}
+          </p>
+        </div>
+
+        {/* Floating Controls Toolbar */}
+        <div
+          className="flex items-center gap-3 bg-zinc-50/90 backdrop-blur-sm rounded-full border border-black/[0.04] px-4 py-1.5 shadow-2xs text-xs sticky top-2 z-20 mb-6"
+          data-testid="pdf-controls-toolbar"
+        >
+          {/* Page Navigation */}
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-full"
+              disabled={currentPage <= 1 || loading}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              title="Previous page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="font-medium text-foreground px-1 select-none">
+              {`Page ${currentPage} of ${numPages}`}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-full"
+              disabled={currentPage >= numPages || loading}
+              onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
+              title="Next page"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="h-4 w-px bg-zinc-200" />
+
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-full"
+              disabled={scale <= 0.6 || loading}
+              onClick={() =>
+                setScale((s) => Math.max(0.6, Number((s - 0.15).toFixed(2))))
+              }
+              title="Zoom out"
+            >
+              <ZoomOut className="h-3.5 w-3.5" />
+            </Button>
+            <span className="w-12 text-center text-muted-foreground font-medium select-none">
+              {Math.round(scale * 100)}%
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-full"
+              disabled={scale >= 2.0 || loading}
+              onClick={() =>
+                setScale((s) => Math.min(2.0, Number((s + 0.15).toFixed(2))))
+              }
+              title="Zoom in"
+            >
+              <ZoomIn className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+
+          {/* Download / Open Action */}
+          {activeDownloadUrl && (
+            <>
+              <div className="h-4 w-px bg-zinc-200" />
+              <a
+                href={activeDownloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground text-xs font-medium px-2 py-1 rounded-full hover:bg-zinc-200/50 transition-colors"
+                title="Open or download PDF"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                <span>Open PDF</span>
+              </a>
+            </>
+          )}
+        </div>
+
+        {/* Loading state */}
         {loading && (
           <div className="flex flex-col items-center justify-center p-16 gap-3 text-muted-foreground">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -280,6 +321,7 @@ export function DocumentCenterViewer({
           </div>
         )}
 
+        {/* Error state */}
         {error && !loading && (
           <div className="flex flex-col items-center justify-center p-12 text-center max-w-md gap-3">
             <div className="h-10 w-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
@@ -307,7 +349,7 @@ export function DocumentCenterViewer({
         >
           <canvas
             ref={canvasRef}
-            className="block max-w-full h-auto shadow-xs rounded-[2px]"
+            className="block max-w-full h-auto shadow-xs rounded-[4px] border border-black/[0.04]"
             data-testid="pdf-render-canvas"
           />
         </div>
