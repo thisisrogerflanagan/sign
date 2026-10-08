@@ -219,14 +219,18 @@ export function DocumentLifecyclePanel({
           </div>
 
           {isDraft ? (
-            <div className="rounded-xl bg-white border border-black/[0.04] p-4 text-xs text-muted-foreground flex items-center gap-2 shadow-xs">
-              <Clock className="h-4 w-4 text-primary shrink-0" />
+            <div className="py-2 text-xs text-muted-foreground flex items-center gap-2">
+              <img
+                src="/icons/progress_ring.svg"
+                alt="Draft"
+                className="h-5 w-5 shrink-0"
+              />
               <span>
                 Draft mode. Place fields and send to start the signing lifecycle.
               </span>
             </div>
           ) : isDeclined ? (
-            <div className="rounded-xl bg-rose-50/80 p-4 border border-rose-200/60 text-xs text-rose-900 flex items-start gap-2.5 shadow-xs">
+            <div className="rounded-xl bg-rose-50/80 p-3.5 border border-rose-200/60 text-xs text-rose-900 flex items-start gap-2.5">
               <Ban className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold">Signature Request Declined</p>
@@ -237,7 +241,7 @@ export function DocumentLifecyclePanel({
               </div>
             </div>
           ) : isVoided ? (
-            <div className="rounded-xl bg-white border border-black/[0.04] p-4 text-xs text-zinc-700 flex items-start gap-2.5 shadow-xs">
+            <div className="rounded-xl bg-zinc-100/80 p-3.5 border border-zinc-200 text-xs text-zinc-700 flex items-start gap-2.5">
               <Ban className="h-4 w-4 text-zinc-500 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold">Signature Request Voided</p>
@@ -248,107 +252,102 @@ export function DocumentLifecyclePanel({
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl border border-black/[0.04] bg-white p-4 sm:p-5 shadow-xs">
+            <div className="flex flex-col gap-3 py-1" data-testid="lifecycle-stepper">
+              {/* Stage 1: Sent */}
               <div
-                className="grid grid-cols-3 gap-2 text-center"
-                data-testid="lifecycle-stepper"
+                className="flex items-start gap-2.5"
+                data-testid="stage-sent"
+                data-stage-current={stage1Current ? 'true' : 'false'}
+                data-stage-completed={stage1Completed ? 'true' : 'false'}
               >
-                {/* Stage 1: Sent */}
-                <div
-                  className="space-y-1.5 flex flex-col items-center"
-                  data-testid="stage-sent"
-                  data-stage-current={stage1Current ? 'true' : 'false'}
-                  data-stage-completed={stage1Completed ? 'true' : 'false'}
-                >
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
-                      stage1Completed
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : stage1Current
-                          ? 'bg-primary text-primary-foreground ring-2 ring-primary/20 shadow-xs'
-                          : 'bg-zinc-100 text-zinc-400'
-                    }`}
-                  >
-                    {stage1Completed ? <Check className="h-4 w-4" /> : '1'}
-                  </div>
-                  <p
+                <img
+                  src={
+                    stage1Completed
+                      ? '/icons/progress_ring_complete.svg'
+                      : '/icons/progress_ring.svg'
+                  }
+                  alt={stage1Completed ? 'Completed' : 'Pending'}
+                  className="h-5 w-5 shrink-0 mt-0.5"
+                />
+                <div className="flex flex-col min-w-0">
+                  <span
                     className={`text-xs ${
                       stage1Current || stage1Completed
-                        ? 'font-semibold text-foreground'
+                        ? 'font-medium text-foreground'
                         : 'text-muted-foreground'
                     }`}
                   >
                     Sent
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-mono">
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-mono">
                     {doc.sent_at ? formatDate(doc.sent_at) : '—'}
-                  </p>
+                  </span>
                 </div>
+              </div>
 
-                {/* Stage 2: Opened */}
-                <div
-                  className="space-y-1.5 flex flex-col items-center"
-                  data-testid="stage-opened"
-                  data-stage-current={stage2Current ? 'true' : 'false'}
-                  data-stage-completed={stage2Completed ? 'true' : 'false'}
-                >
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
-                      stage2Completed
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : stage2Current
-                          ? 'bg-blue-600 text-white ring-2 ring-blue-500/20 shadow-xs'
-                          : 'bg-zinc-100 text-zinc-400'
-                    }`}
-                  >
-                    {stage2Completed ? <Check className="h-4 w-4" /> : '2'}
-                  </div>
-                  <p
+              {/* Stage 2: Opened */}
+              <div
+                className="flex items-start gap-2.5"
+                data-testid="stage-opened"
+                data-stage-current={stage2Current ? 'true' : 'false'}
+                data-stage-completed={stage2Completed ? 'true' : 'false'}
+              >
+                <img
+                  src={
+                    stage2Completed
+                      ? '/icons/progress_ring_complete.svg'
+                      : '/icons/progress_ring.svg'
+                  }
+                  alt={stage2Completed ? 'Completed' : 'Pending'}
+                  className="h-5 w-5 shrink-0 mt-0.5"
+                />
+                <div className="flex flex-col min-w-0">
+                  <span
                     className={`text-xs ${
                       stage2Current || stage2Completed
-                        ? 'font-semibold text-foreground'
+                        ? 'font-medium text-foreground'
                         : 'text-muted-foreground'
                     }`}
                   >
                     Opened
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-mono">
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-mono">
                     {doc.viewed_at ? formatDate(doc.viewed_at) : 'Awaiting open'}
-                  </p>
+                  </span>
                 </div>
+              </div>
 
-                {/* Stage 3: Signed */}
-                <div
-                  className="space-y-1.5 flex flex-col items-center"
-                  data-testid="stage-signed"
-                  data-stage-current={stage3Current ? 'true' : 'false'}
-                  data-stage-completed={stage3Completed ? 'true' : 'false'}
-                >
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
-                      stage3Completed
-                        ? 'bg-emerald-600 text-white ring-2 ring-emerald-500/20 shadow-xs'
-                        : stage3Current
-                          ? 'bg-purple-600 text-white ring-2 ring-purple-500/20 shadow-xs'
-                          : 'bg-zinc-100 text-zinc-400'
-                    }`}
-                  >
-                    {stage3Completed ? <Check className="h-4 w-4" /> : '3'}
-                  </div>
-                  <p
+              {/* Stage 3: Signed */}
+              <div
+                className="flex items-start gap-2.5"
+                data-testid="stage-signed"
+                data-stage-current={stage3Current ? 'true' : 'false'}
+                data-stage-completed={stage3Completed ? 'true' : 'false'}
+              >
+                <img
+                  src={
+                    stage3Completed
+                      ? '/icons/progress_ring_complete.svg'
+                      : '/icons/progress_ring.svg'
+                  }
+                  alt={stage3Completed ? 'Completed' : 'Pending'}
+                  className="h-5 w-5 shrink-0 mt-0.5"
+                />
+                <div className="flex flex-col min-w-0">
+                  <span
                     className={`text-xs ${
                       stage3Current || stage3Completed
-                        ? 'font-semibold text-foreground'
+                        ? 'font-medium text-foreground'
                         : 'text-muted-foreground'
                     }`}
                   >
                     Signed
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-mono">
+                  </span>
+                  <span className="text-[11px] text-muted-foreground font-mono">
                     {doc.completed_at
                       ? formatDate(doc.completed_at)
                       : 'Awaiting signature'}
-                  </p>
+                  </span>
                 </div>
               </div>
             </div>
