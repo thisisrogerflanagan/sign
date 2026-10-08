@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import {
   Shield,
   Send,
@@ -12,9 +12,8 @@ import {
   Download,
   FileText,
   Activity,
-  User,
   Globe,
-  Lock,
+  Laptop,
 } from 'lucide-react'
 import { formatDate } from '@/lib/document-helpers'
 
@@ -33,34 +32,37 @@ export interface DocumentActivityFeedProps {
   events: ActivityEvent[]
 }
 
-export function DocumentActivityFeed({ events = [] }: DocumentActivityFeedProps) {
-  const [activeTab, setActiveTab] = useState<'all' | 'timeline' | 'security'>('all')
+function parseUserAgent(
+  ua?: string | null
+): { browser: string; os: string; formatted: string } | null {
+  if (!ua) return null
+  let browser = 'Browser'
+  let os = 'Device'
 
+  // Detect OS
+  if (/macintosh|mac os x/i.test(ua)) os = 'macOS'
+  else if (/windows/i.test(ua)) os = 'Windows'
+  else if (/iphone|ipad|ipod/i.test(ua)) os = 'iOS'
+  else if (/android/i.test(ua)) os = 'Android'
+  else if (/linux/i.test(ua)) os = 'Linux'
+
+  // Detect Browser
+  if (/edg/i.test(ua)) browser = 'Edge'
+  else if (/chrome|crios/i.test(ua)) browser = 'Chrome'
+  else if (/firefox|fxios/i.test(ua)) browser = 'Firefox'
+  else if (/safari/i.test(ua) && !/chrome|crios/i.test(ua)) browser = 'Safari'
+
+  return {
+    browser,
+    os,
+    formatted: `${browser} on ${os}`,
+  }
+}
+
+export function DocumentActivityFeed({ events = [] }: DocumentActivityFeedProps) {
   // Chronological order: Newest first
   const sortedEvents = [...events].sort((a, b) => {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  })
-
-  // Filter events based on active tab
-  const filteredEvents = sortedEvents.filter((ev) => {
-    if (activeTab === 'timeline') {
-      return [
-        'document_sent',
-        'document_viewed',
-        'document_completed',
-        'field_filled',
-        'reminder_sent',
-      ].includes(ev.event_type)
-    }
-    if (activeTab === 'security') {
-      return Boolean(
-        ev.ip_address ||
-        ev.user_agent ||
-        ev.event_type.includes('declined') ||
-        ev.event_type.includes('voided')
-      )
-    }
-    return true
   })
 
   function getEventIcon(eventType: string) {
@@ -84,66 +86,12 @@ export function DocumentActivityFeed({ events = [] }: DocumentActivityFeedProps)
       case 'document_created':
         return <FileText className="h-3.5 w-3.5 text-zinc-600" />
       default:
-        return <Activity className="h-3.5 w-3.5 text-primary" />
-    }
-  }
-
-  function getEventBulletBg(eventType: string) {
-    switch (eventType) {
-      case 'document_sent':
-        return 'bg-blue-50 border-blue-200'
-      case 'document_viewed':
-        return 'bg-indigo-50 border-indigo-200'
-      case 'document_completed':
-        return 'bg-emerald-50 border-emerald-200'
-      case 'document_declined':
-        return 'bg-rose-50 border-rose-200'
-      case 'reminder_sent':
-        return 'bg-amber-50 border-amber-200'
-      default:
-        return 'bg-zinc-100 border-zinc-200'
+        return <Activity className="h-3.5 w-3.5 text-zinc-600" />
     }
   }
 
   return (
     <div className="space-y-4 w-full" data-testid="right-activity-column">
-      {/* Craft Text Tabs Header */}
-      <div className="flex items-center gap-5 border-b border-zinc-200/60 pb-2 px-1 text-xs">
-        <button
-          type="button"
-          onClick={() => setActiveTab('all')}
-          className={`font-semibold transition-colors pb-1 relative ${
-            activeTab === 'all'
-              ? 'text-foreground after:absolute after:bottom-[-9px] after:left-0 after:right-0 after:h-[2px] after:bg-foreground'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          All
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('timeline')}
-          className={`font-semibold transition-colors pb-1 relative ${
-            activeTab === 'timeline'
-              ? 'text-foreground after:absolute after:bottom-[-9px] after:left-0 after:right-0 after:h-[2px] after:bg-foreground'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          Timeline
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('security')}
-          className={`font-semibold transition-colors pb-1 relative ${
-            activeTab === 'security'
-              ? 'text-foreground after:absolute after:bottom-[-9px] after:left-0 after:right-0 after:h-[2px] after:bg-foreground'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          Security
-        </button>
-      </div>
-
       {/* Title & Subtitle */}
       <div className="space-y-1 px-1">
         <h2 className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
@@ -152,59 +100,69 @@ export function DocumentActivityFeed({ events = [] }: DocumentActivityFeedProps)
         </h2>
         <p className="text-[11px] text-muted-foreground leading-relaxed">
           Tamper-evident, chronological log of all interactions with server timestamps and
-          IP addresses.
+          client details.
         </p>
       </div>
 
-      {filteredEvents.length === 0 ? (
+      {sortedEvents.length === 0 ? (
         <div
-          className="rounded-2xl border border-dashed border-zinc-200 bg-white p-6 text-center text-xs text-muted-foreground"
+          className="py-6 px-1 text-xs text-muted-foreground"
           data-testid="activity-empty-state"
         >
           No audit events recorded yet.
         </div>
       ) : (
-        <div className="space-y-2.5" data-testid="activity-feed-list">
-          {filteredEvents.map((event) => {
-            const bulletBg = getEventBulletBg(event.event_type)
+        <div className="space-y-1" data-testid="activity-feed-list">
+          {sortedEvents.map((event) => {
+            const client = parseUserAgent(event.user_agent)
             const icon = getEventIcon(event.event_type)
 
             return (
               <div
                 key={event.id}
-                className="rounded-2xl border border-black/[0.04] p-3.5 bg-white text-xs space-y-2 shadow-xs hover:border-black/10 transition-all group"
+                className="px-2 py-2 rounded-xl hover:bg-black/[0.02] transition-colors text-xs space-y-1 group"
                 data-testid={`activity-event-${event.id}`}
                 data-event-type={event.event_type}
               >
-                {/* Event Icon, Title & Timestamp */}
+                {/* Event Icon, Action Title & Timestamp */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div
-                      className={`h-6 w-6 rounded-lg border flex items-center justify-center shrink-0 ${bulletBg}`}
-                    >
+                    <div className="h-5 w-5 rounded-md flex items-center justify-center shrink-0">
                       {icon}
                     </div>
-                    <span className="font-semibold capitalize text-foreground text-xs truncate">
+                    <span className="font-medium capitalize text-foreground text-xs truncate">
                       {event.event_type.replace(/_/g, ' ')}
                     </span>
                   </div>
-                  <span className="text-muted-foreground font-mono text-[10px] shrink-0">
+                  <span className="text-muted-foreground/70 font-mono text-[10px] shrink-0">
                     {formatDate(event.created_at)} UTC
                   </span>
                 </div>
 
-                {/* Audit details */}
-                <div className="rounded-xl bg-zinc-50/70 p-2.5 text-[11px] text-muted-foreground space-y-1">
+                {/* Actor, parsed client device, and IP */}
+                <div className="pl-7 space-y-1 text-[11px] text-muted-foreground">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-foreground/80 font-medium">Actor:</span>
-                    <span className="font-mono text-foreground font-semibold">
+                    <span className="font-mono text-foreground/85 font-medium truncate max-w-[200px]">
                       {event.actor_email || event.actor_type || 'system'}
                     </span>
+                    {client && (
+                      <>
+                        <span className="text-zinc-300">&bull;</span>
+                        <span
+                          className="inline-flex items-center gap-1 text-[11px] text-foreground/75 font-medium"
+                          title={event.user_agent || undefined}
+                        >
+                          <Laptop className="h-3 w-3 text-muted-foreground/60" />
+                          <span>{client.formatted}</span>
+                        </span>
+                      </>
+                    )}
                     {event.ip_address && (
                       <>
                         <span className="text-zinc-300">&bull;</span>
-                        <span className="font-mono text-muted-foreground">
-                          IP: {event.ip_address}
+                        <span className="inline-flex items-center gap-1 font-mono text-muted-foreground/80">
+                          <Globe className="h-3 w-3 text-muted-foreground/50" />
+                          <span>{event.ip_address}</span>
                         </span>
                       </>
                     )}
@@ -227,8 +185,8 @@ export function DocumentActivityFeed({ events = [] }: DocumentActivityFeedProps)
                       </div>
                     )}
 
-                  {/* User agent if present */}
-                  {event.user_agent && (
+                  {/* Raw User Agent fallback if unparsed */}
+                  {event.user_agent && !client && (
                     <div className="truncate max-w-xs text-[10px] text-muted-foreground/60 font-mono pt-0.5">
                       {event.user_agent}
                     </div>
