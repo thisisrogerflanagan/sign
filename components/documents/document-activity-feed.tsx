@@ -146,7 +146,7 @@ export function DocumentActivityFeed({ events = [] }: DocumentActivityFeedProps)
 
       {/* Title & Subtitle */}
       <div className="space-y-1 px-1">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+        <h2 className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
           <Shield className="h-3.5 w-3.5 text-primary shrink-0" />
           Activity Record
         </h2>
@@ -194,7 +194,7 @@ export function DocumentActivityFeed({ events = [] }: DocumentActivityFeedProps)
                 </div>
 
                 {/* Audit details */}
-                <div className="rounded-xl bg-zinc-50/70 p-2.5 border border-zinc-200/40 text-[11px] text-muted-foreground space-y-1">
+                <div className="rounded-xl bg-zinc-50/70 p-2.5 text-[11px] text-muted-foreground space-y-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-foreground/80 font-medium">Actor:</span>
                     <span className="font-mono text-foreground font-semibold">

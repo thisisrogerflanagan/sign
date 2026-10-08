@@ -100,6 +100,18 @@
     --radius: 0.5rem;
     --radius-md: 8px;
     --foreground-800: rgba(26, 28, 30, 0.85);
+
+    /* Craft.do Design Tokens */
+    --craft-bg: #f7f7f8;
+    --craft-border: rgba(0, 0, 0, 0.04);
+    --craft-border-hover: rgba(0, 0, 0, 0.08);
+    --craft-sheet-shadow:
+      0px 2px 4px rgba(0, 0, 0, 0.02), 0px 8px 16px rgba(0, 0, 0, 0.03),
+      0px 0px 0px 1px rgba(0, 0, 0, 0.03);
+    --craft-card-shadow:
+      0px 1px 1px 0px rgba(0, 0, 0, 0.04), 0px 3px 3px 0px rgba(0, 0, 0, 0.04),
+      0px 6px 4px 0px rgba(0, 0, 0, 0.02), 0px 11px 4px 0px rgba(0, 0, 0, 0.01),
+      0px 0px 0px 1px rgba(0, 0, 0, 0.03);
   }
 
   .dark {

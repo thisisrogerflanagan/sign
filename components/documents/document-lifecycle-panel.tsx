@@ -209,9 +209,9 @@ export function DocumentLifecyclePanel({
       {showLifecycle && (
         <div className="space-y-3" data-testid="lifecycle-section">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <h2 className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-primary" />
-              Lifecycle Progress
+              Lifecycle progress
             </h2>
             <span className="text-[11px] font-medium text-muted-foreground capitalize">
               {doc.status}
@@ -360,9 +360,9 @@ export function DocumentLifecyclePanel({
       {showSigners && (
         <div className="space-y-3" data-testid="signers-card">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <h2 className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
               <User className="h-3.5 w-3.5 text-primary" />
-              Signer Details
+              Signer details
             </h2>
             <span className="rounded-full bg-zinc-200/60 px-2 py-0.5 text-[10px] font-medium text-zinc-700">
               {signers.length} {signers.length === 1 ? 'signer' : 'signers'}
@@ -407,7 +407,7 @@ export function DocumentLifecyclePanel({
                     </div>
 
                     {/* Per-signer timestamps */}
-                    <div className="rounded-xl bg-zinc-50/70 p-2.5 border border-zinc-200/50 space-y-1 text-[11px]">
+                    <div className="rounded-xl bg-zinc-50/70 p-2.5 space-y-1 text-[11px]">
                       <div className="flex items-center justify-between text-muted-foreground">
                         <span>Sent:</span>
                         <span className="font-mono text-foreground font-medium">

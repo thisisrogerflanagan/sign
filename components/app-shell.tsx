@@ -44,9 +44,9 @@ export function AppShell({ sidebar, children, documents }: AppShellProps) {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background">
+    <div className="h-screen flex flex-col overflow-hidden bg-[#F7F7F8] text-foreground">
       {/* 48px Top of the App Header */}
-      <header className="relative h-[48px] shrink-0 w-full flex items-center justify-between select-none bg-background z-20">
+      <header className="relative h-[48px] shrink-0 w-full flex items-center justify-between select-none bg-[#F7F7F8]/80 backdrop-blur-md border-b border-black/[0.04] z-20">
         {/* Left: Sidebar Toggle Button (left aligns at 24px with sidebar nav icons) */}
         <div className="flex items-center pl-[20px]">
           <button
@@ -125,7 +125,7 @@ export function AppShell({ sidebar, children, documents }: AppShellProps) {
           height: '100%',
           transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           overflow: 'hidden',
-          background: 'rgb(252, 253, 254)',
+          background: '#F7F7F8',
           transform: 'scale(1)',
           transformOrigin: 'center bottom',
           willChange: 'transform',
@@ -143,7 +143,7 @@ export function AppShell({ sidebar, children, documents }: AppShellProps) {
         </div>
 
         {/* Center Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 p-8 space-y-6 h-full overflow-y-auto transition-all duration-300">
+        <div className="flex-1 flex flex-col min-w-0 p-4 sm:p-6 lg:p-8 space-y-6 h-full overflow-y-auto transition-all duration-300">
           {children}
         </div>
       </div>

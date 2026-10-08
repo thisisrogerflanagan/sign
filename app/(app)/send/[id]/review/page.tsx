@@ -124,17 +124,21 @@ export default function ReviewAndSendPage({
   // Sent Confirmation View
   if (sentResult) {
     return (
-      <div className="min-h-screen bg-[#FCFDFE] flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-[#F7F7F8] flex flex-col items-center justify-center p-4">
         <div
-          className="w-full max-w-lg rounded-2xl border bg-card p-8 shadow-sm text-center space-y-6 animate-in fade-in zoom-in-95"
+          style={{
+            boxShadow:
+              'rgba(0, 0, 0, 0.04) 0px 0px 0px 1px, rgba(0, 0, 0, 0.04) 0px 1px 1px 0px, rgba(0, 0, 0, 0.04) 0px 2px 4px 0px',
+          }}
+          className="w-full max-w-lg rounded-2xl sm:rounded-3xl border border-black/[0.04] bg-white p-8 sm:p-10 text-center space-y-6 animate-in fade-in zoom-in-95"
           data-testid="sent-confirmation-card"
         >
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
             <CheckCircle2 className="h-7 w-7" />
           </div>
 
           <div className="space-y-1.5">
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {isTest ? 'Test request ready!' : 'Signature request sent!'}
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -144,8 +148,8 @@ export default function ReviewAndSendPage({
           </div>
 
           {/* Direct Copyable Signing Link */}
-          <div className="rounded-xl border bg-muted/40 p-4 text-left space-y-2">
-            <Label className="text-xs text-muted-foreground">
+          <div className="rounded-2xl bg-zinc-50/80 p-4 text-left space-y-2 border border-black/[0.03]">
+            <Label className="text-xs text-muted-foreground font-medium">
               Or share link directly
             </Label>
             <div className="flex items-center gap-2">
@@ -153,14 +157,14 @@ export default function ReviewAndSendPage({
                 readOnly
                 value={sentResult.signingUrl}
                 data-testid="sent-signing-url-input"
-                className="text-xs font-mono bg-background"
+                className="text-xs font-mono bg-white rounded-xl border-black/[0.06]"
               />
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleCopyLink}
-                className="shrink-0"
+                className="shrink-0 rounded-full border-black/[0.08]"
               >
                 {copied ? (
                   <Check className="h-4 w-4 text-emerald-600" />
@@ -173,10 +177,14 @@ export default function ReviewAndSendPage({
           </div>
 
           <div className="space-y-3 pt-2">
-            <Button asChild className="w-full">
+            <Button asChild className="w-full rounded-full shadow-xs">
               <Link href={`/documents/${documentId}`}>View document progress</Link>
             </Button>
-            <Button asChild variant="outline" className="w-full">
+            <Button
+              asChild
+              variant="outline"
+              className="w-full rounded-full border-black/[0.08]"
+            >
               <Link href="/send">Send another document</Link>
             </Button>
           </div>
@@ -186,11 +194,11 @@ export default function ReviewAndSendPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#FCFDFE] pb-16">
+    <div className="min-h-screen bg-[#F7F7F8] pb-16 text-foreground">
       {/* Top Navbar */}
-      <div className="border-b bg-background">
+      <div className="border-b border-black/[0.04] bg-[#F7F7F8]/80 backdrop-blur-md sticky top-0 z-20">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4 sm:px-6">
-          <Button asChild variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="sm" className="rounded-full">
             <Link
               href={`/send/${documentId}/place`}
               className="text-muted-foreground hover:text-foreground"
@@ -206,7 +214,7 @@ export default function ReviewAndSendPage({
             <span className="text-muted-foreground">&rarr;</span>
             <span className="text-muted-foreground">Place fields</span>
             <span className="text-muted-foreground">&rarr;</span>
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-[11px]">
               3
             </span>
             <span className="font-semibold text-foreground">Review & send</span>
@@ -218,7 +226,7 @@ export default function ReviewAndSendPage({
 
       <main className="mx-auto max-w-xl px-4 pt-10 sm:px-6">
         <div className="space-y-2 text-center mb-8">
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             Review & send signature request
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -227,7 +235,7 @@ export default function ReviewAndSendPage({
         </div>
 
         {error && (
-          <div className="mb-6 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-xs text-destructive flex items-start gap-3">
+          <div className="mb-6 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-xs text-destructive flex items-start gap-3">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             <p className="leading-relaxed">{error}</p>
           </div>
@@ -235,7 +243,7 @@ export default function ReviewAndSendPage({
 
         {/* Blocker: Zero fields */}
         {!loading && fieldCount === 0 && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-xs text-amber-900 flex items-start gap-3">
+          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-xs text-amber-900 flex items-start gap-3">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" />
             <div>
               <p className="font-semibold">No signature fields placed</p>
@@ -255,9 +263,15 @@ export default function ReviewAndSendPage({
           </div>
         )}
 
-        <div className="rounded-2xl border bg-card p-6 sm:p-8 shadow-sm space-y-6">
+        <div
+          style={{
+            boxShadow:
+              'rgba(0, 0, 0, 0.04) 0px 0px 0px 1px, rgba(0, 0, 0, 0.04) 0px 1px 1px 0px, rgba(0, 0, 0, 0.04) 0px 2px 4px 0px',
+          }}
+          className="rounded-2xl sm:rounded-3xl border border-black/[0.04] bg-white p-6 sm:p-8 shadow-sm space-y-6"
+        >
           {/* Summary Box */}
-          <div className="rounded-xl bg-muted/40 p-4 border text-xs space-y-1.5">
+          <div className="rounded-2xl bg-zinc-50/70 p-4 text-xs space-y-1.5 border border-black/[0.02]">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-foreground flex items-center gap-1.5">
                 <FileText className="h-3.5 w-3.5 text-primary" />
@@ -275,7 +289,10 @@ export default function ReviewAndSendPage({
 
           <form onSubmit={handleSend} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="signerEmail" className="flex items-center gap-1.5">
+              <Label
+                htmlFor="signerEmail"
+                className="flex items-center gap-1.5 text-xs font-medium"
+              >
                 <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                 Signer Email <span className="text-destructive">*</span>
               </Label>
@@ -288,11 +305,15 @@ export default function ReviewAndSendPage({
                 required
                 disabled={sending}
                 data-testid="signer-email-input"
+                className="rounded-xl border-black/[0.08] focus:border-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="signerName" className="flex items-center gap-1.5">
+              <Label
+                htmlFor="signerName"
+                className="flex items-center gap-1.5 text-xs font-medium"
+              >
                 <User className="h-3.5 w-3.5 text-muted-foreground" />
                 Signer Name{' '}
                 <span className="text-muted-foreground text-xs">(optional)</span>
@@ -305,11 +326,15 @@ export default function ReviewAndSendPage({
                 onChange={(e) => setSignerName(e.target.value)}
                 disabled={sending}
                 data-testid="signer-name-input"
+                className="rounded-xl border-black/[0.08] focus:border-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="senderMessage" className="flex items-center gap-1.5">
+              <Label
+                htmlFor="senderMessage"
+                className="flex items-center gap-1.5 text-xs font-medium"
+              >
                 <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
                 Message to Signer{' '}
                 <span className="text-muted-foreground text-xs">(optional)</span>
@@ -322,13 +347,13 @@ export default function ReviewAndSendPage({
                 onChange={(e) => setSenderMessage(e.target.value)}
                 disabled={sending}
                 data-testid="sender-message-input"
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="w-full rounded-xl border border-black/[0.08] bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               />
             </div>
 
             {/* Test Send Checkbox */}
             <div className="pt-2">
-              <label className="flex items-start gap-3 p-3 rounded-xl border bg-[#FCFDFE] cursor-pointer hover:bg-muted/40 transition-colors">
+              <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-black/[0.04] bg-zinc-50/70 cursor-pointer hover:bg-zinc-100/70 transition-colors">
                 <input
                   type="checkbox"
                   checked={isTest}
@@ -352,7 +377,7 @@ export default function ReviewAndSendPage({
             <div className="pt-4">
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full rounded-full shadow-xs h-10 font-semibold"
                 disabled={sending || fieldCount === 0 || !signerEmail}
                 data-testid="send-envelope-button"
               >
