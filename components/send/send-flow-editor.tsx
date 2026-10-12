@@ -9,8 +9,6 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  ZoomIn,
-  ZoomOut,
   Sparkles,
   Loader2,
   AlertCircle,
@@ -22,6 +20,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -36,7 +35,11 @@ import {
 } from '@/components/ui/dialog'
 import { FieldType } from '@/lib/supabase/types'
 import { SignatureCaptureModal } from '@/components/signer/signature-capture-modal'
-import { THUMBNAIL_CARD_STYLE } from '@/components/documents/document-thumbnail'
+import {
+  FILTER_GROUP_CONTAINER_STYLE,
+  FILTER_GROUP_CONTAINER_CLASS,
+  FILTER_GROUP_BUTTON_BASE_CLASS,
+} from '@/components/documents/home-feed-filters'
 import { InfoPanel, PlacedFieldData } from './info-panel'
 import { FieldPalette, PaletteItem } from './field-palette'
 import { UploadArea } from './upload-area'
@@ -52,11 +55,19 @@ const DEFAULT_DIMENSIONS: Record<FieldType, { width: number; height: number }> =
 export interface SendFlowEditorProps {
   initialStep?: 'upload' | 'place'
   documentId?: string
+  initialTitle?: string
+  initialNumPages?: number
+  initialCurrentPage?: number
+  initialFields?: PlacedFieldData[]
 }
 
 export function SendFlowEditor({
   initialStep = 'upload',
   documentId: propDocId,
+  initialTitle = 'Document',
+  initialNumPages = 1,
+  initialCurrentPage = 1,
+  initialFields = [],
 }: SendFlowEditorProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -66,14 +77,14 @@ export function SendFlowEditor({
   const [documentId, setDocumentId] = useState<string>(propDocId || '')
 
   // Document metadata state
-  const [docTitle, setDocTitle] = useState('Document')
+  const [docTitle, setDocTitle] = useState(initialTitle)
   const [fileName, setFileName] = useState('')
   const [fileSizeBytes, setFileSizeBytes] = useState<number | undefined>(undefined)
   const [docCreatedAt, setDocCreatedAt] = useState<string | null>(null)
   const [docUpdatedAt, setDocUpdatedAt] = useState<string | null>(null)
   const [docAuthor, setDocAuthor] = useState<string>('Roger Flanagan')
   const [docStatus, setDocStatus] = useState<string>('draft')
-  const [pageCount, setPageCount] = useState<number>(1)
+  const [pageCount, setPageCount] = useState<number>(initialNumPages)
   const [signers, setSigners] = useState<any[]>([])
 
   // Upload state
@@ -86,12 +97,12 @@ export function SendFlowEditor({
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState<number>(1)
-  const [numPages, setNumPages] = useState<number>(1)
-  const [scale, setScale] = useState<number>(1.1)
+  const [currentPage, setCurrentPage] = useState<number>(initialCurrentPage)
+  const [numPages, setNumPages] = useState<number>(initialNumPages)
+  const [scale] = useState<number>(1.1)
 
   // Fields state
-  const [fields, setFields] = useState<PlacedFieldData[]>([])
+  const [fields, setFields] = useState<PlacedFieldData[]>(initialFields)
   const [activeFieldId, setActiveFieldId] = useState<string | null>(null)
   const [savedStatus, setSavedStatus] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -613,14 +624,6 @@ export function SendFlowEditor({
               {step === 'upload' ? 'Cancel' : 'Save draft & exit'}
             </Link>
           </Button>
-          {step === 'place' && (
-            <>
-              <div className="h-4 w-px bg-zinc-200 hidden sm:block" />
-              <span className="font-semibold text-xs sm:text-sm truncate max-w-[200px] sm:max-w-xs text-foreground/80">
-                {docTitle}
-              </span>
-            </>
-          )}
         </div>
 
         {/* Stepper indicator */}
@@ -629,7 +632,7 @@ export function SendFlowEditor({
             className={`flex h-5 w-5 items-center justify-center rounded-full text-xs font-semibold ${
               step === 'upload'
                 ? 'bg-primary text-primary-foreground'
-                : 'bg-emerald-100 text-emerald-800'
+                : 'bg-zinc-200 text-zinc-800'
             }`}
           >
             {step === 'upload' ? '1' : '✓'}
@@ -665,25 +668,7 @@ export function SendFlowEditor({
         </div>
 
         <div className="flex items-center gap-3">
-          {savedStatus && (
-            <span className="text-xs text-muted-foreground animate-in fade-in flex items-center gap-1">
-              <Check className="h-3.5 w-3.5 text-emerald-600" />
-              {savedStatus}
-            </span>
-          )}
-
-          {step === 'place' && (
-            <Button
-              size="sm"
-              onClick={handleSendDocument}
-              disabled={fields.length === 0}
-              data-testid="continue-to-review-button"
-              className="rounded-full shadow-xs"
-            >
-              Review & send
-              <ArrowRight className="ml-1.5 h-4 w-4" />
-            </Button>
-          )}
+          <div className="w-20" />
         </div>
       </header>
 
@@ -709,12 +694,11 @@ export function SendFlowEditor({
           onDeleteDraft={() => setDeleteConfirmOpen(true)}
         />
 
-        {/* CENTER AREA: Document Canvas (Floating Craft Sheet) */}
+        {/* CENTER AREA: Document Canvas */}
         <main
           ref={containerRef}
           onClick={() => setActiveFieldId(null)}
-          style={THUMBNAIL_CARD_STYLE}
-          className="flex-1 min-w-0 h-full overflow-auto flex flex-col items-center justify-start bg-white rounded-2xl sm:rounded-3xl border border-black/[0.04] p-6 sm:p-8 relative shadow-sm"
+          className="flex-1 min-w-0 h-full overflow-auto flex flex-col items-center justify-start relative"
         >
           {step === 'upload' ? (
             <UploadArea
@@ -734,10 +718,10 @@ export function SendFlowEditor({
               error={uploadError}
             />
           ) : (
-            <>
+            <div className="w-fit max-w-full flex flex-col items-stretch gap-4 pb-12">
               {/* Auto-detect suggestions bar */}
               {suggestionCount > 0 && (
-                <div className="mb-4 w-full max-w-xl bg-amber-50 border border-amber-200/80 rounded-xl px-4 py-2.5 shadow-sm flex items-center justify-between gap-3 text-amber-900 text-xs animate-in fade-in slide-in-from-top-2">
+                <div className="w-full bg-amber-50 border border-amber-200/80 rounded-xl px-4 py-2.5 shadow-sm flex items-center justify-between gap-3 text-amber-900 text-xs animate-in fade-in slide-in-from-top-2">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
                     <span className="font-medium">
@@ -753,7 +737,7 @@ export function SendFlowEditor({
                         e.stopPropagation()
                         handleAcceptAllSuggestions()
                       }}
-                      className="h-7 text-xs bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
+                      className="h-7 text-xs bg-white text-zinc-800 border-zinc-300 hover:bg-zinc-100"
                     >
                       <Check className="mr-1 h-3 w-3" />
                       Accept all
@@ -773,297 +757,323 @@ export function SendFlowEditor({
                 </div>
               )}
 
-              {loading && (
-                <div className="flex flex-col items-center justify-center p-16 gap-3 text-muted-foreground">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-sm">Rendering PDF pages with retina clarity...</p>
-                </div>
-              )}
-
-              {error && (
-                <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-6 text-center text-destructive text-sm max-w-md">
-                  <AlertCircle className="mx-auto h-6 w-6 mb-2" />
-                  {error}
-                </div>
-              )}
-
-              {!loading && !error && (
-                <div className="space-y-4 flex flex-col items-center">
-                  {/* Floating Pill Controls bar */}
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-4 bg-background/95 backdrop-blur-sm rounded-full border px-4 py-1.5 shadow-sm text-xs sticky top-0 z-10"
-                  >
-                    <div className="flex items-center gap-1">
+              {/* Header row above the document (same width as the document card, three zones) */}
+              <div
+                data-testid="send-header-row"
+                onClick={(e) => e.stopPropagation()}
+                className="w-full flex items-center justify-between gap-4 select-none min-h-[40px]"
+              >
+                {/* Left: prev/next button group (hidden on single-page documents) */}
+                <div className="flex items-center justify-start min-w-[140px]">
+                  {numPages > 1 && (
+                    <div
+                      data-testid="pager-button-group"
+                      className={FILTER_GROUP_CONTAINER_CLASS}
+                      style={FILTER_GROUP_CONTAINER_STYLE}
+                    >
                       <Button
+                        type="button"
                         variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
                         disabled={currentPage <= 1}
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        className={cn(
+                          FILTER_GROUP_BUTTON_BASE_CLASS,
+                          'inline-flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none'
+                        )}
                       >
                         <ChevronLeft className="h-4 w-4" />
+                        <span>Prev</span>
                       </Button>
-                      <span className="font-medium text-foreground">
-                        Page {currentPage} of {numPages}
+                      <span
+                        data-testid="page-indicator"
+                        className="px-2 text-[13px] font-medium text-[#121417] tabular-nums whitespace-nowrap"
+                      >
+                        {`${currentPage} / ${numPages}`}
                       </span>
                       <Button
+                        type="button"
                         variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
                         disabled={currentPage >= numPages}
                         onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
+                        className={cn(
+                          FILTER_GROUP_BUTTON_BASE_CLASS,
+                          'inline-flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none'
+                        )}
                       >
+                        <span>Next</span>
                         <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
+                  )}
+                </div>
 
-                    <div className="h-4 w-px bg-border" />
-
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => setScale((s) => Math.max(0.6, s - 0.15))}
-                      >
-                        <ZoomOut className="h-3.5 w-3.5" />
-                      </Button>
-                      <span className="w-12 text-center text-muted-foreground font-medium">
-                        {Math.round(scale * 100)}%
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => setScale((s) => Math.min(2.0, s + 0.15))}
-                      >
-                        <ZoomIn className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* PDF Canvas Container */}
-                  <div
-                    onClick={() => setActiveFieldId(null)}
-                    onDragOver={handleCanvasDragOver}
-                    onDrop={handleCanvasDrop}
-                    className="relative cursor-default rounded-lg shadow-xl bg-white select-none border border-zinc-200"
+                {/* Center: document title element, centered */}
+                <div className="flex-1 flex items-center justify-center min-w-0 px-2">
+                  <span
+                    data-testid="document-title"
+                    className="font-semibold text-xs sm:text-sm truncate text-foreground/80 text-center"
+                    title={docTitle}
                   >
-                    <canvas ref={canvasRef} className="block" />
+                    {docTitle}
+                  </span>
+                </div>
 
-                    {/* Overlaid Placed Fields for Current Page */}
-                    {pageFields.map((field) => {
-                      const isSelected = activeFieldId === field.id
-                      const isSuggestion = !!field.is_suggestion
+                {/* Right: CTA buttons, right-aligned to document card edge */}
+                <div className="flex items-center justify-end gap-3 min-w-[140px]">
+                  {savedStatus && (
+                    <span className="text-xs text-muted-foreground animate-in fade-in flex items-center gap-1">
+                      <Check className="h-3.5 w-3.5 text-zinc-600" />
+                      {savedStatus}
+                    </span>
+                  )}
 
-                      return (
-                        <div
-                          key={field.id}
-                          onMouseDown={(e) => startDragging(e, field)}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setActiveFieldId(field.id)
-                          }}
-                          style={{
-                            position: 'absolute',
-                            left: `${field.x * 100}%`,
-                            top: `${field.y * 100}%`,
-                            width: `${field.width * 100}%`,
-                            height: `${field.height * 100}%`,
-                          }}
-                          className={`group absolute flex items-center justify-between rounded-md p-1.5 transition-all cursor-move select-none ${
-                            isSuggestion
-                              ? isSelected
-                                ? 'border-2 border-amber-600 bg-amber-100/90 text-amber-950 shadow-md ring-2 ring-amber-400 z-20'
-                                : 'border-2 border-dashed border-amber-500 bg-amber-50/80 text-amber-900 hover:border-amber-600 z-10'
-                              : isSelected
-                                ? 'border-2 border-primary bg-primary/20 text-primary shadow-md ring-2 ring-primary/30 z-20'
-                                : field.assigned_to === 'sender'
-                                  ? 'border-2 border-purple-500 bg-purple-50/80 text-purple-900 hover:border-purple-600 z-10'
-                                  : 'border-2 border-blue-500/80 bg-blue-50/80 text-blue-900 hover:border-primary z-10'
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5 text-[11px] font-semibold truncate pointer-events-none">
-                            {field.type === 'signature' && (
-                              <FileSignature className="h-3.5 w-3.5 shrink-0" />
-                            )}
-                            {field.type === 'initials' && (
-                              <PenTool className="h-3.5 w-3.5 shrink-0" />
-                            )}
-                            {field.type === 'date' && (
-                              <Calendar className="h-3.5 w-3.5 shrink-0" />
-                            )}
-                            {field.type === 'name' && (
-                              <User className="h-3.5 w-3.5 shrink-0" />
-                            )}
-                            {field.type === 'text' && (
-                              <Type className="h-3.5 w-3.5 shrink-0" />
-                            )}
+                  <Button
+                    size="sm"
+                    onClick={handleSendDocument}
+                    disabled={fields.length === 0}
+                    data-testid="continue-to-review-button"
+                    className="rounded-full shadow-xs"
+                  >
+                    Review & send
+                    <ArrowRight className="ml-1.5 h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
 
-                            <span className="truncate">{field.label}</span>
+              {/* Below the header: the PDF as a single card */}
+              <div
+                data-testid="pdf-page-card"
+                onClick={() => setActiveFieldId(null)}
+                onDragOver={handleCanvasDragOver}
+                onDrop={handleCanvasDrop}
+                className="pdf-page-card relative cursor-default select-none mx-auto"
+              >
+                {loading && (
+                  <div className="flex flex-col items-center justify-center p-16 gap-3 text-muted-foreground min-w-[400px] min-h-[500px]">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-sm">Rendering PDF pages with retina clarity...</p>
+                  </div>
+                )}
 
-                            {isSuggestion && (
-                              <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.2 text-[9px] font-medium bg-amber-200/80 text-amber-800">
-                                ✨ Suggested
-                              </span>
-                            )}
+                {error && (
+                  <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-6 text-center text-destructive text-sm max-w-md m-8">
+                    <AlertCircle className="mx-auto h-6 w-6 mb-2" />
+                    {error}
+                  </div>
+                )}
 
-                            {field.assigned_to === 'sender' && !isSuggestion && (
-                              <span className="inline-flex items-center rounded px-1 py-0.2 text-[9px] font-medium bg-purple-200/80 text-purple-800">
-                                {field.value ? 'Signed (Me)' : 'Me'}
-                              </span>
-                            )}
-                          </div>
+                <canvas
+                  ref={canvasRef}
+                  className={cn('block', (loading || error) && 'hidden')}
+                />
 
-                          {/* Quick action buttons on field hover */}
-                          <div className="flex items-center gap-1">
-                            {isSuggestion && (
-                              <button
-                                type="button"
-                                title="Accept suggestion"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleAcceptSingleSuggestion(field.id)
-                                }}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white p-0.5 rounded shadow-sm transition-all"
-                              >
-                                <Check className="h-3 w-3" />
-                              </button>
-                            )}
+                {/* Overlaid Placed Fields for Current Page */}
+                {!loading &&
+                  !error &&
+                  pageFields.map((field) => {
+                    const isSelected = activeFieldId === field.id
+                    const isSuggestion = !!field.is_suggestion
 
+                    return (
+                      <div
+                        key={field.id}
+                        data-testid={`field-placeholder-${field.id}`}
+                        onMouseDown={(e) => startDragging(e, field)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setActiveFieldId(field.id)
+                        }}
+                        style={{
+                          position: 'absolute',
+                          left: `${field.x * 100}%`,
+                          top: `${field.y * 100}%`,
+                          width: `${field.width * 100}%`,
+                          height: `${field.height * 100}%`,
+                        }}
+                        className={cn(
+                          'field-placeholder group absolute flex items-center justify-between p-1.5 transition-colors cursor-move select-none',
+                          isSelected && 'drag-over z-20',
+                          !isSelected && 'z-10'
+                        )}
+                      >
+                        <div className="flex items-center gap-1.5 text-[12px] text-[#8A8A8A] font-medium truncate pointer-events-none">
+                          {field.type === 'signature' && (
+                            <FileSignature className="h-3.5 w-3.5 shrink-0" />
+                          )}
+                          {field.type === 'initials' && (
+                            <PenTool className="h-3.5 w-3.5 shrink-0" />
+                          )}
+                          {field.type === 'date' && (
+                            <Calendar className="h-3.5 w-3.5 shrink-0" />
+                          )}
+                          {field.type === 'name' && (
+                            <User className="h-3.5 w-3.5 shrink-0" />
+                          )}
+                          {field.type === 'text' && (
+                            <Type className="h-3.5 w-3.5 shrink-0" />
+                          )}
+
+                          <span className="truncate">{field.label}</span>
+
+                          {isSuggestion && (
+                            <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.2 text-[9px] font-medium bg-zinc-200/80 text-zinc-700">
+                              ✨ Suggested
+                            </span>
+                          )}
+
+                          {field.assigned_to === 'sender' && !isSuggestion && (
+                            <span className="inline-flex items-center rounded px-1 py-0.2 text-[9px] font-medium bg-zinc-200/80 text-zinc-700">
+                              {field.value ? 'Signed (Me)' : 'Me'}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Quick action buttons on field hover */}
+                        <div className="flex items-center gap-1">
+                          {isSuggestion && (
                             <button
                               type="button"
-                              title="Delete field"
+                              title="Accept suggestion"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handleDeleteField(field.id)
+                                handleAcceptSingleSuggestion(field.id)
                               }}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-destructive hover:bg-destructive/10"
+                              className="bg-zinc-800 hover:bg-zinc-900 text-white p-0.5 rounded shadow-sm transition-all"
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <Check className="h-3 w-3" />
                             </button>
-                          </div>
+                          )}
 
-                          {/* Floating Field Inspector Popover */}
-                          {isSelected && (
-                            <div
-                              onMouseDown={(e) => e.stopPropagation()}
-                              onClick={(e) => e.stopPropagation()}
-                              style={{
-                                top: '100%',
-                                left: 0,
-                                marginTop: '8px',
-                              }}
-                              className="absolute z-30 w-72 rounded-xl border bg-background p-3.5 shadow-xl text-left cursor-default animate-in fade-in zoom-in-95 space-y-3"
-                            >
-                              <div className="flex items-center justify-between border-b pb-2">
-                                <span className="text-xs font-semibold capitalize text-foreground">
-                                  {field.type} Field
-                                </span>
+                          <button
+                            type="button"
+                            title="Delete field"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteField(field.id)
+                            }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+
+                        {/* Floating Field Inspector Popover */}
+                        {isSelected && (
+                          <div
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                            style={
+                              field.y > 0.65
+                                ? { bottom: '100%', left: 0, marginBottom: '8px' }
+                                : { top: '100%', left: 0, marginTop: '8px' }
+                            }
+                            className="absolute z-30 w-72 rounded-xl border bg-background p-3.5 shadow-xl text-left cursor-default animate-in fade-in zoom-in-95 space-y-3"
+                          >
+                            <div className="flex items-center justify-between border-b pb-2">
+                              <span className="text-xs font-semibold capitalize text-foreground">
+                                {field.type} Field
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setActiveFieldId(null)}
+                                className="text-muted-foreground hover:text-foreground"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                Label
+                              </Label>
+                              <Input
+                                value={field.label}
+                                onChange={(e) =>
+                                  handleUpdateActiveField({ label: e.target.value })
+                                }
+                                className="h-7 text-xs"
+                                placeholder="e.g. Client signature"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                Assigned To
+                              </Label>
+                              <div className="grid grid-cols-2 gap-1.5">
                                 <button
                                   type="button"
-                                  onClick={() => setActiveFieldId(null)}
-                                  className="text-muted-foreground hover:text-foreground"
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-
-                              <div className="space-y-1">
-                                <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                                  Label
-                                </Label>
-                                <Input
-                                  value={field.label}
-                                  onChange={(e) =>
-                                    handleUpdateActiveField({ label: e.target.value })
+                                  onClick={() =>
+                                    handleUpdateActiveField({ assigned_to: 'signer' })
                                   }
-                                  className="h-7 text-xs"
-                                  placeholder="e.g. Client signature"
-                                />
-                              </div>
-
-                              <div className="space-y-1">
-                                <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                                  Assigned To
-                                </Label>
-                                <div className="grid grid-cols-2 gap-1.5">
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleUpdateActiveField({ assigned_to: 'signer' })
-                                    }
-                                    className={`py-1 px-2 rounded-lg border text-xs font-medium transition-colors ${
-                                      field.assigned_to === 'signer'
-                                        ? 'border-primary bg-primary/10 text-primary'
-                                        : 'border-border text-muted-foreground hover:bg-muted'
-                                    }`}
-                                  >
-                                    Signer
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleUpdateActiveField({ assigned_to: 'sender' })
-                                    }
-                                    className={`py-1 px-2 rounded-lg border text-xs font-medium transition-colors ${
-                                      field.assigned_to === 'sender'
-                                        ? 'border-purple-600 bg-purple-50 text-purple-800'
-                                        : 'border-border text-muted-foreground hover:bg-muted'
-                                    }`}
-                                  >
-                                    Me (Sender)
-                                  </button>
-                                </div>
-                              </div>
-
-                              {field.assigned_to === 'sender' && (
-                                <div className="pt-1">
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    className="w-full text-xs h-7"
-                                    onClick={() => setSenderSignModalOpen(true)}
-                                  >
-                                    {field.value ? 'Re-sign field' : 'Sign field now'}
-                                  </Button>
-                                </div>
-                              )}
-
-                              <div className="flex items-center justify-between pt-1 border-t text-xs">
-                                <label className="flex items-center gap-1.5 cursor-pointer font-medium text-muted-foreground hover:text-foreground">
-                                  <input
-                                    type="checkbox"
-                                    checked={field.required}
-                                    onChange={(e) =>
-                                      handleUpdateActiveField({
-                                        required: e.target.checked,
-                                      })
-                                    }
-                                    className="rounded border-zinc-300 text-primary h-3.5 w-3.5"
-                                  />
-                                  <span>Required</span>
-                                </label>
-
+                                  className={`py-1 px-2 rounded-lg border text-xs font-medium transition-colors ${
+                                    field.assigned_to === 'signer'
+                                      ? 'border-primary bg-primary/10 text-primary'
+                                      : 'border-border text-muted-foreground hover:bg-muted'
+                                  }`}
+                                >
+                                  Signer
+                                </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleDeleteField(field.id)}
-                                  className="text-destructive hover:underline text-[11px]"
+                                  onClick={() =>
+                                    handleUpdateActiveField({ assigned_to: 'sender' })
+                                  }
+                                  className={`py-1 px-2 rounded-lg border text-xs font-medium transition-colors ${
+                                    field.assigned_to === 'sender'
+                                      ? 'border-zinc-800 bg-zinc-100 text-zinc-900 font-semibold'
+                                      : 'border-border text-muted-foreground hover:bg-muted'
+                                  }`}
                                 >
-                                  Delete
+                                  Me (Sender)
                                 </button>
                               </div>
                             </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </>
+
+                            {field.assigned_to === 'sender' && (
+                              <div className="pt-1">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full text-xs h-7"
+                                  onClick={() => setSenderSignModalOpen(true)}
+                                >
+                                  {field.value ? 'Re-sign field' : 'Sign field now'}
+                                </Button>
+                              </div>
+                            )}
+
+                            <div className="flex items-center justify-between pt-1 border-t text-xs">
+                              <label className="flex items-center gap-1.5 cursor-pointer font-medium text-muted-foreground hover:text-foreground">
+                                <input
+                                  type="checkbox"
+                                  checked={field.required}
+                                  onChange={(e) =>
+                                    handleUpdateActiveField({
+                                      required: e.target.checked,
+                                    })
+                                  }
+                                  className="rounded border-zinc-300 text-primary h-3.5 w-3.5"
+                                />
+                                <span>Required</span>
+                              </label>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteField(field.id)}
+                                className="text-destructive hover:underline text-[11px]"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+              </div>
+            </div>
           )}
         </main>
 

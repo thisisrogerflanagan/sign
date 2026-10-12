@@ -237,3 +237,23 @@
   color: rgba(26, 28, 30, 0.85);
   font-weight: 400;
 }
+
+.pdf-page-card {
+  border-radius: 20px;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.field-placeholder {
+  border: 1.5px dashed #c9c9c9;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+}
+
+.field-placeholder:hover,
+.field-placeholder.drag-over {
+  border-color: #9a9a9a;
+}
