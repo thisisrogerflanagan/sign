@@ -67,7 +67,7 @@ describe('Issue #26: Profile dropdown frosted squircle panel', () => {
 
   it('defines exact .profile-menu-panel CSS in app/globals.css and inline style', () => {
     const cssPath = path.join(process.cwd(), 'app/globals.css')
-    const cssContent = fs.readFileSync(cssPath, 'utf-8')
+    const cssContent = fs.readFileSync(cssPath, 'utf-8').replace(/\s+/g, ' ')
 
     expect(cssContent).toContain('.profile-menu-panel')
     expect(cssContent).toContain('border-radius: 18px;')

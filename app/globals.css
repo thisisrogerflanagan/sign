@@ -259,3 +259,9 @@
     border-radius: 18px;
   }
 }
+
+@media (max-width: 767.98px) {
+  .sidebar-rail-label {
+    display: none;
+  }
+}

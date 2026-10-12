@@ -279,7 +279,10 @@ export function AppShell({
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#F7F7F8] text-foreground">
       {/* 48px Top of the App Header */}
-      <header className="relative h-[48px] shrink-0 w-full flex items-center justify-between select-none bg-[#F7F7F8]/80 backdrop-blur-md border-b border-black/[0.04] z-20">
+      <header
+        className="relative h-[48px] shrink-0 ml-[88px] flex items-center justify-between select-none bg-[#F7F7F8]/80 backdrop-blur-md border-b border-black/[0.04] z-20"
+        style={{ marginLeft: '88px' }}
+      >
         {/* Left: Sidebar Toggle Button (left aligns at 24px with sidebar nav icons) */}
         <div className="flex items-center pl-[20px]">
           <button
@@ -389,37 +392,16 @@ export function AppShell({
         </div>
       </header>
 
-      {/* 2-Column Section of the App */}
-      <div
-        className="flex-1 min-h-0"
-        style={{
-          position: 'relative',
-          left: '0px',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'row',
-          height: '100%',
-          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          overflow: 'hidden',
-          background: '#F7F7F8',
-          transform: 'scale(1)',
-          transformOrigin: 'center bottom',
-          willChange: 'transform',
-        }}
-      >
-        {/* Collapsible Sidebar Rail with Smooth Slide Transition */}
-        <div
-          className={`shrink-0 h-full overflow-hidden transition-[width,transform,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-            sidebarOpen
-              ? 'w-[268px] opacity-100 translate-x-0'
-              : 'w-0 opacity-0 -translate-x-full pointer-events-none'
-          }`}
-        >
-          <div className="w-[268px] h-full overflow-y-auto">{sidebar}</div>
-        </div>
+      {/* Fixed Left Sidebar Rail + Main Content Area */}
+      <div className="flex-1 min-h-0 flex flex-row h-full overflow-hidden bg-[#F7F7F8]">
+        {sidebar}
 
-        {/* Center Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 p-4 sm:p-6 lg:p-8 space-y-6 h-full overflow-y-auto transition-all duration-300">
+        {/* Center Content Area shifted right by 88px rail width */}
+        <div
+          data-testid="app-main-content"
+          className="flex-1 flex flex-col min-w-0 ml-[88px] p-4 sm:p-6 lg:p-8 space-y-6 h-full overflow-y-auto transition-all duration-300"
+          style={{ marginLeft: '88px' }}
+        >
           {children}
         </div>
       </div>
