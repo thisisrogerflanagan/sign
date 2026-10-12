@@ -3,7 +3,10 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { DocumentRowActions } from '@/components/documents/document-row-actions'
-import { DocumentThumbnail } from '@/components/documents/document-thumbnail'
+import {
+  DocumentThumbnail,
+  THUMBNAIL_CARD_STYLE,
+} from '@/components/documents/document-thumbnail'
 import { HomeFeedFilters } from '@/components/documents/home-feed-filters'
 import { AppShell } from '@/components/app-shell'
 import { AppSidebar } from '@/components/app-sidebar'
@@ -122,6 +125,11 @@ export default async function HomePage(props: HomePageProps) {
   return (
     <AppShell
       documents={documents || []}
+      userName={
+        user.user_metadata?.display_name || user.email?.split('@')[0] || 'Joe Banks'
+      }
+      userEmail={user.email}
+      requestsSent={requestsSent}
       sidebar={
         <AppSidebar
           userName={
@@ -132,7 +140,10 @@ export default async function HomePage(props: HomePageProps) {
         />
       }
     >
-      <main className="w-full space-y-6">
+      <main
+        style={THUMBNAIL_CARD_STYLE}
+        className="w-full max-w-6xl mx-auto bg-white rounded-2xl sm:rounded-3xl border border-black/[0.04] p-6 sm:p-8 shadow-sm space-y-6"
+      >
         {/* Main Content View Heading */}
         <div className="space-y-3">
           <div

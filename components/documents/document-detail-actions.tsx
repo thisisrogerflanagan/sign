@@ -101,7 +101,10 @@ export function DocumentDetailActions({
     try {
       const res = await fetch(`/api/envelopes/${documentId}/void`, { method: 'POST' })
       if (!res.ok) throw new Error('Void failed')
-      toast({ title: 'Request voided', description: 'The document can no longer be signed.' })
+      toast({
+        title: 'Request voided',
+        description: 'The document can no longer be signed.',
+      })
       setVoidOpen(false)
       router.refresh()
     } catch {
@@ -129,7 +132,9 @@ export function DocumentDetailActions({
   async function handleDuplicate() {
     setLoading(true)
     try {
-      const res = await fetch(`/api/envelopes/${documentId}/duplicate`, { method: 'POST' })
+      const res = await fetch(`/api/envelopes/${documentId}/duplicate`, {
+        method: 'POST',
+      })
       const data = await res.json()
       if (data.newDocumentId) {
         toast({ title: 'Draft duplicated', description: 'Opening fresh draft...' })
@@ -145,7 +150,7 @@ export function DocumentDetailActions({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {status === 'draft' && (
-        <Button asChild size="sm">
+        <Button asChild size="sm" className="rounded-full shadow-xs">
           <Link href={`/send/${documentId}/place`}>
             <Edit className="mr-1.5 h-3.5 w-3.5" />
             Continue editing
@@ -154,7 +159,7 @@ export function DocumentDetailActions({
       )}
 
       {status === 'completed' && downloadSignedUrl && (
-        <Button asChild size="sm">
+        <Button asChild size="sm" className="rounded-full shadow-xs">
           <a href={downloadSignedUrl} target="_blank" rel="noreferrer" download>
             <Download className="mr-1.5 h-3.5 w-3.5" />
             Download signed PDF
@@ -163,7 +168,12 @@ export function DocumentDetailActions({
       )}
 
       {downloadOriginalUrl && status !== 'completed' && (
-        <Button asChild variant="outline" size="sm">
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="rounded-full border-black/[0.08] shadow-xs"
+        >
           <a href={downloadOriginalUrl} target="_blank" rel="noreferrer" download>
             <Download className="mr-1.5 h-3.5 w-3.5" />
             Download original PDF
@@ -172,7 +182,12 @@ export function DocumentDetailActions({
       )}
 
       {canCopyLink && (
-        <Button variant="outline" size="sm" onClick={handleCopyLink}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-full border-black/[0.08] shadow-xs"
+          onClick={handleCopyLink}
+        >
           {copied ? (
             <Check className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
           ) : (
@@ -183,13 +198,24 @@ export function DocumentDetailActions({
       )}
 
       {canRemind && (
-        <Button variant="outline" size="sm" onClick={() => setRemindOpen(true)}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-full border-black/[0.08] shadow-xs"
+          onClick={() => setRemindOpen(true)}
+        >
           <Bell className="mr-1.5 h-3.5 w-3.5" />
           Remind
         </Button>
       )}
 
-      <Button variant="outline" size="sm" onClick={handleDuplicate} disabled={loading}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="rounded-full border-black/[0.08] shadow-xs"
+        onClick={handleDuplicate}
+        disabled={loading}
+      >
         <CopyPlus className="mr-1.5 h-3.5 w-3.5" />
         Duplicate
       </Button>
@@ -198,7 +224,7 @@ export function DocumentDetailActions({
         <Button
           variant="outline"
           size="sm"
-          className="text-amber-700 hover:text-amber-800"
+          className="rounded-full border-black/[0.08] shadow-xs text-amber-700 hover:text-amber-800"
           onClick={() => setVoidOpen(true)}
         >
           <Ban className="mr-1.5 h-3.5 w-3.5" />
@@ -209,7 +235,7 @@ export function DocumentDetailActions({
       <Button
         variant="ghost"
         size="sm"
-        className="text-destructive hover:bg-destructive/10"
+        className="rounded-full text-destructive hover:bg-destructive/10"
         onClick={() => setDeleteOpen(true)}
       >
         <Trash2 className="mr-1.5 h-3.5 w-3.5" />
@@ -226,7 +252,11 @@ export function DocumentDetailActions({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRemindOpen(false)} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={() => setRemindOpen(false)}
+              disabled={loading}
+            >
               Cancel
             </Button>
             <Button onClick={handleRemind} disabled={loading}>
@@ -242,11 +272,16 @@ export function DocumentDetailActions({
           <DialogHeader>
             <DialogTitle>Void &quot;{title}&quot;?</DialogTitle>
             <DialogDescription>
-              This will immediately deactivate all signing links. Signers will see a &quot;Request canceled&quot; message.
+              This will immediately deactivate all signing links. Signers will see a
+              &quot;Request canceled&quot; message.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setVoidOpen(false)} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={() => setVoidOpen(false)}
+              disabled={loading}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleVoid} disabled={loading}>
@@ -262,11 +297,16 @@ export function DocumentDetailActions({
           <DialogHeader>
             <DialogTitle>Delete &quot;{title}&quot;?</DialogTitle>
             <DialogDescription>
-              This removes the document from your feed and permanently removes PDF storage copies. This cannot be undone.
+              This removes the document from your feed and permanently removes PDF storage
+              copies. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteOpen(false)}
+              disabled={loading}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={loading}>

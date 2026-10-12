@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/dialog'
 import { FieldType } from '@/lib/supabase/types'
 import { SignatureCaptureModal } from '@/components/signer/signature-capture-modal'
+import { THUMBNAIL_CARD_STYLE } from '@/components/documents/document-thumbnail'
 import { InfoPanel, PlacedFieldData } from './info-panel'
 import { FieldPalette, PaletteItem } from './field-palette'
 import { UploadArea } from './upload-area'
@@ -602,11 +603,11 @@ export function SendFlowEditor({
   const suggestionCount = fields.filter((f) => f.is_suggestion).length
 
   return (
-    <div className="flex h-screen flex-col bg-[#FCFDFE]">
+    <div className="flex h-screen flex-col bg-[#F7F7F8] text-foreground">
       {/* Top Navbar */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4 sm:px-6 z-20">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-black/[0.04] bg-[#F7F7F8]/80 backdrop-blur-md px-4 sm:px-6 z-20">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="sm" className="rounded-full">
             <Link href="/" className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="mr-1.5 h-4 w-4" />
               {step === 'upload' ? 'Cancel' : 'Save draft & exit'}
@@ -614,8 +615,8 @@ export function SendFlowEditor({
           </Button>
           {step === 'place' && (
             <>
-              <div className="h-4 w-px bg-border hidden sm:block" />
-              <span className="font-semibold text-sm truncate max-w-[200px] sm:max-w-xs">
+              <div className="h-4 w-px bg-zinc-200 hidden sm:block" />
+              <span className="font-semibold text-xs sm:text-sm truncate max-w-[200px] sm:max-w-xs text-foreground/80">
                 {docTitle}
               </span>
             </>
@@ -677,6 +678,7 @@ export function SendFlowEditor({
               onClick={handleSendDocument}
               disabled={fields.length === 0}
               data-testid="continue-to-review-button"
+              className="rounded-full shadow-xs"
             >
               Review & send
               <ArrowRight className="ml-1.5 h-4 w-4" />
@@ -686,7 +688,7 @@ export function SendFlowEditor({
       </header>
 
       {/* Main 3-Column Layout: Left Info Panel + Center Canvas + Right Field Palette */}
-      <div className="flex flex-1 overflow-hidden p-4 gap-4 bg-[#FCFDFE]">
+      <div className="flex flex-1 overflow-hidden p-4 sm:p-6 gap-6 bg-[#F7F7F8]">
         {/* LEFT SIDEBAR: Stand-Alone Info Panel with Tab Nav */}
         <InfoPanel
           documentTitle={docTitle}
@@ -707,11 +709,12 @@ export function SendFlowEditor({
           onDeleteDraft={() => setDeleteConfirmOpen(true)}
         />
 
-        {/* CENTER AREA: Document Canvas (Upload area before upload, PDF viewer after) */}
+        {/* CENTER AREA: Document Canvas (Floating Craft Sheet) */}
         <main
           ref={containerRef}
           onClick={() => setActiveFieldId(null)}
-          className="flex-1 min-w-0 h-full overflow-auto flex flex-col items-center justify-start bg-zinc-100/70 rounded-2xl border border-black/[0.04] p-6 relative"
+          style={THUMBNAIL_CARD_STYLE}
+          className="flex-1 min-w-0 h-full overflow-auto flex flex-col items-center justify-start bg-white rounded-2xl sm:rounded-3xl border border-black/[0.04] p-6 sm:p-8 relative shadow-sm"
         >
           {step === 'upload' ? (
             <UploadArea

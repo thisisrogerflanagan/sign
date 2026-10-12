@@ -11,17 +11,18 @@ export function GettingStartedCard({ hasDocuments }: { hasDocuments: boolean }) 
   if (dismissed || hasDocuments) return null
 
   return (
-    <div className="relative rounded-xl border bg-muted/30 p-4 text-xs space-y-2.5">
+    <div className="relative rounded-2xl border border-black/[0.04] bg-white p-5 text-xs space-y-3 shadow-xs">
       <button
         onClick={() => setDismissed(true)}
-        className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground rounded-full p-1 hover:bg-zinc-100 transition-colors"
+        title="Dismiss"
       >
         <X className="h-3.5 w-3.5" />
       </button>
 
       <div className="flex items-center gap-1.5 font-semibold text-foreground">
         <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-        Getting Started
+        Getting started
       </div>
 
       <p className="text-muted-foreground leading-relaxed">

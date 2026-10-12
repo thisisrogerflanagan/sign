@@ -148,18 +148,18 @@ export function InfoPanel({
   return (
     <aside
       aria-label="Document info panel"
-      className="w-72 shrink-0 bg-white rounded-2xl border border-black/[0.06] shadow-sm flex flex-col overflow-hidden h-full z-10"
+      className="w-72 shrink-0 flex flex-col h-full z-10 space-y-3 select-none"
     >
-      {/* Tab Navigation — Floating pill controls */}
-      <div className="p-3 border-b border-zinc-100 bg-zinc-50/50">
-        <div className="grid grid-cols-4 gap-1 bg-zinc-100/80 p-1 rounded-xl text-xs font-medium text-zinc-600">
+      {/* Tab Navigation — Craft Segmented Pill Switcher */}
+      <div className="p-1 bg-zinc-200/60 rounded-full text-xs font-medium text-muted-foreground select-none">
+        <div className="grid grid-cols-4 gap-0.5">
           <button
             type="button"
             onClick={() => handleTabClick('properties')}
-            className={`py-1.5 px-1 rounded-lg text-center transition-all truncate text-[11px] ${
+            className={`py-1.5 px-1 rounded-full text-center transition-all truncate text-[11px] ${
               currentTab === 'properties'
-                ? 'bg-white text-zinc-900 font-semibold shadow-xs'
-                : 'text-zinc-500 hover:text-zinc-900'
+                ? 'bg-white text-foreground font-semibold shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Properties
@@ -167,10 +167,10 @@ export function InfoPanel({
           <button
             type="button"
             onClick={() => handleTabClick('review')}
-            className={`py-1.5 px-1 rounded-lg text-center transition-all truncate text-[11px] ${
+            className={`py-1.5 px-1 rounded-full text-center transition-all truncate text-[11px] ${
               currentTab === 'review'
-                ? 'bg-white text-zinc-900 font-semibold shadow-xs'
-                : 'text-zinc-500 hover:text-zinc-900'
+                ? 'bg-white text-foreground font-semibold shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Review
@@ -178,10 +178,10 @@ export function InfoPanel({
           <button
             type="button"
             onClick={() => handleTabClick('actions')}
-            className={`py-1.5 px-1 rounded-lg text-center transition-all truncate text-[11px] ${
+            className={`py-1.5 px-1 rounded-full text-center transition-all truncate text-[11px] ${
               currentTab === 'actions'
-                ? 'bg-white text-zinc-900 font-semibold shadow-xs'
-                : 'text-zinc-500 hover:text-zinc-900'
+                ? 'bg-white text-foreground font-semibold shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Actions
@@ -189,10 +189,10 @@ export function InfoPanel({
           <button
             type="button"
             onClick={() => handleTabClick('stats')}
-            className={`py-1.5 px-1 rounded-lg text-center transition-all truncate text-[11px] ${
+            className={`py-1.5 px-1 rounded-full text-center transition-all truncate text-[11px] ${
               currentTab === 'stats'
-                ? 'bg-white text-zinc-900 font-semibold shadow-xs'
-                : 'text-zinc-500 hover:text-zinc-900'
+                ? 'bg-white text-foreground font-semibold shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Stats
@@ -216,7 +216,7 @@ export function InfoPanel({
 
             <div className="space-y-3 pt-1">
               {/* File Name */}
-              <div className="flex items-start gap-3 p-2.5 rounded-xl bg-zinc-50/70 border border-zinc-100">
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-white border border-black/[0.04] shadow-xs">
                 <div className="p-1.5 rounded-lg bg-zinc-100 text-zinc-600 mt-0.5 shrink-0">
                   <FileText className="h-4 w-4" />
                 </div>
@@ -234,7 +234,7 @@ export function InfoPanel({
               </div>
 
               {/* Page Count */}
-              <div className="flex items-start gap-3 p-2.5 rounded-xl bg-zinc-50/70 border border-zinc-100">
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-white border border-black/[0.04] shadow-xs">
                 <div className="p-1.5 rounded-lg bg-zinc-100 text-zinc-600 mt-0.5 shrink-0">
                   <Layers className="h-4 w-4" />
                 </div>
@@ -249,7 +249,7 @@ export function InfoPanel({
               </div>
 
               {/* File Size */}
-              <div className="flex items-start gap-3 p-2.5 rounded-xl bg-zinc-50/70 border border-zinc-100">
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-white border border-black/[0.04] shadow-xs">
                 <div className="p-1.5 rounded-lg bg-zinc-100 text-zinc-600 mt-0.5 shrink-0">
                   <HardDrive className="h-4 w-4" />
                 </div>
@@ -264,7 +264,7 @@ export function InfoPanel({
               </div>
 
               {/* Upload Date */}
-              <div className="flex items-start gap-3 p-2.5 rounded-xl bg-zinc-50/70 border border-zinc-100">
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-white border border-black/[0.04] shadow-xs">
                 <div className="p-1.5 rounded-lg bg-zinc-100 text-zinc-600 mt-0.5 shrink-0">
                   <Calendar className="h-4 w-4" />
                 </div>
@@ -506,15 +506,15 @@ export function InfoPanel({
             </div>
 
             {/* Current Status Pill */}
-            <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-between">
+            <div className="p-3 rounded-xl bg-white border border-black/[0.04] shadow-xs flex items-center justify-between">
               <span className="text-muted-foreground text-xs font-medium">Status</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-zinc-200 text-zinc-800">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-zinc-100 text-zinc-800 border border-black/[0.04]">
                 {hasDocument ? status : 'Not uploaded'}
               </span>
             </div>
 
             {/* Signers Count */}
-            <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-between">
+            <div className="p-3 rounded-xl bg-white border border-black/[0.04] shadow-xs flex items-center justify-between">
               <div className="flex items-center gap-2 text-zinc-600">
                 <User className="h-3.5 w-3.5" />
                 <span className="text-muted-foreground text-xs font-medium">
@@ -532,7 +532,7 @@ export function InfoPanel({
 
               <div className="grid grid-cols-2 gap-2">
                 {/* Signature */}
-                <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-100 flex flex-col justify-between">
+                <div className="p-3 rounded-xl bg-white border border-black/[0.04] shadow-xs flex flex-col justify-between">
                   <div className="flex items-center justify-between">
                     <FileSignature className="h-3.5 w-3.5 text-zinc-400" />
                     <span className="text-base font-bold text-foreground">
@@ -545,7 +545,7 @@ export function InfoPanel({
                 </div>
 
                 {/* Initials */}
-                <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-100 flex flex-col justify-between">
+                <div className="p-3 rounded-xl bg-white border border-black/[0.04] shadow-xs flex flex-col justify-between">
                   <div className="flex items-center justify-between">
                     <PenTool className="h-3.5 w-3.5 text-zinc-400" />
                     <span className="text-base font-bold text-foreground">
@@ -556,7 +556,7 @@ export function InfoPanel({
                 </div>
 
                 {/* Date */}
-                <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-100 flex flex-col justify-between">
+                <div className="p-3 rounded-xl bg-white border border-black/[0.04] shadow-xs flex flex-col justify-between">
                   <div className="flex items-center justify-between">
                     <CalendarDays className="h-3.5 w-3.5 text-zinc-400" />
                     <span className="text-base font-bold text-foreground">
@@ -567,7 +567,7 @@ export function InfoPanel({
                 </div>
 
                 {/* Text */}
-                <div className="p-2.5 rounded-xl bg-zinc-50 border border-zinc-100 flex flex-col justify-between">
+                <div className="p-3 rounded-xl bg-white border border-black/[0.04] shadow-xs flex flex-col justify-between">
                   <div className="flex items-center justify-between">
                     <Type className="h-3.5 w-3.5 text-zinc-400" />
                     <span className="text-base font-bold text-foreground">
