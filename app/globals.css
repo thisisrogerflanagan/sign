@@ -150,7 +150,7 @@
     @apply border-border;
   }
   body {
-    background-color: #fcfdfe;
+    background-color: rgb(252, 253, 254);
     @apply text-foreground;
   }
 }

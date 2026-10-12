@@ -146,4 +146,17 @@ describe('Issue #27: Left sidebar slim icon rail (Dropbox layout)', () => {
     expect(pageCode).not.toContain('style={THUMBNAIL_CARD_STYLE}')
     expect(pageCode).not.toMatch(/<main[^>]*bg-white/)
   })
+
+  it('sets body background-color to rgb(252, 253, 254) in globals.css and layout', () => {
+    const globalsCss = fs.readFileSync(
+      path.join(process.cwd(), 'app/globals.css'),
+      'utf8'
+    )
+    expect(globalsCss).toMatch(
+      /body\s*\{[\s\S]*background-color:\s*rgb\(252,\s*253,\s*254\);/
+    )
+
+    const layoutCode = fs.readFileSync(path.join(process.cwd(), 'app/layout.tsx'), 'utf8')
+    expect(layoutCode).toContain('bg-[#FCFDFE]')
+  })
 })

@@ -124,7 +124,7 @@ export default function ReviewAndSendPage({
   // Sent Confirmation View
   if (sentResult) {
     return (
-      <div className="min-h-screen bg-[#F7F7F8] flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-[#FCFDFE] flex flex-col items-center justify-center p-4">
         <div
           style={{
             boxShadow:
@@ -194,9 +194,9 @@ export default function ReviewAndSendPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F7F8] pb-16 text-foreground">
+    <div className="min-h-screen bg-[#FCFDFE] pb-16 text-foreground">
       {/* Top Navbar */}
-      <div className="border-b border-black/[0.04] bg-[#F7F7F8]/80 backdrop-blur-md sticky top-0 z-20">
+      <div className="border-b border-black/[0.04] bg-[#FCFDFE]/80 backdrop-blur-md sticky top-0 z-20">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4 sm:px-6">
           <Button asChild variant="ghost" size="sm" className="rounded-full">
             <Link

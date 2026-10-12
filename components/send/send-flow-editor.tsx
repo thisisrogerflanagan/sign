@@ -753,9 +753,9 @@ export function SendFlowEditor({
   const pages = Array.from({ length: Math.max(1, numPages || 1) }, (_, i) => i + 1)
 
   return (
-    <div className="flex h-screen flex-col bg-[#F7F7F8] text-foreground">
+    <div className="flex h-screen flex-col bg-[#FCFDFE] text-foreground">
       {/* Top Navbar */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-black/[0.04] bg-[#F7F7F8]/80 backdrop-blur-md px-4 sm:px-6 z-20">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-black/[0.04] bg-[#FCFDFE]/80 backdrop-blur-md px-4 sm:px-6 z-20">
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost" size="sm" className="rounded-full">
             <Link href="/" className="text-muted-foreground hover:text-foreground">
@@ -812,7 +812,7 @@ export function SendFlowEditor({
       </header>
 
       {/* Main 3-Column Layout: Left Info Panel + Center Canvas + Right Field Palette */}
-      <div className="flex flex-1 overflow-hidden p-4 sm:p-6 gap-6 bg-[#F7F7F8]">
+      <div className="flex flex-1 overflow-hidden p-4 sm:p-6 gap-6 bg-[#FCFDFE]">
         {/* LEFT SIDEBAR: Stand-Alone Info Panel with Tab Nav */}
         <InfoPanel
           documentTitle={docTitle}

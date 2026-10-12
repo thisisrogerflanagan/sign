@@ -277,10 +277,10 @@ export function AppShell({
   const initials = getUserInitials(userName)
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-[#F7F7F8] text-foreground">
+    <div className="h-screen flex flex-col overflow-hidden bg-[#FCFDFE] text-foreground">
       {/* 48px Top of the App Header */}
       <header
-        className="relative h-[48px] shrink-0 ml-[88px] flex items-center justify-between select-none bg-[#F7F7F8]/80 backdrop-blur-md border-b border-black/[0.04] z-20"
+        className="relative h-[48px] shrink-0 ml-[88px] flex items-center justify-between select-none bg-[#FCFDFE]/80 backdrop-blur-md border-b border-black/[0.04] z-20"
         style={{ marginLeft: '88px' }}
       >
         {/* Left: Sidebar Toggle Button (left aligns at 24px with sidebar nav icons) */}
@@ -393,7 +393,7 @@ export function AppShell({
       </header>
 
       {/* Fixed Left Sidebar Rail + Main Content Area */}
-      <div className="flex-1 min-h-0 flex flex-row h-full overflow-hidden bg-[#F7F7F8]">
+      <div className="flex-1 min-h-0 flex flex-row h-full overflow-hidden bg-[#FCFDFE]">
         {sidebar}
 
         {/* Center Content Area shifted right by 88px rail width */}
