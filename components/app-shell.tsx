@@ -170,9 +170,9 @@ export function ProfileMenuPanel({
   )
 }
 
-interface AppShellProps {
+export interface AppShellProps {
   sidebar: React.ReactNode
-  children: React.ReactNode
+  children?: React.ReactNode
   documents?: Array<{
     id: string
     title: string
@@ -182,6 +182,7 @@ interface AppShellProps {
   userEmail?: string
   userAvatar?: string | null
   requestsSent?: number
+  defaultSidebarOpen?: boolean
 }
 
 export function AppShell({
@@ -192,8 +193,9 @@ export function AppShell({
   userEmail = 'joe@scribbble.com',
   userAvatar,
   requestsSent = 0,
+  defaultSidebarOpen = true,
 }: AppShellProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(defaultSidebarOpen)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -278,32 +280,62 @@ export function AppShell({
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#FCFDFE] text-foreground">
-      {/* 48px Top of the App Header */}
+      {/* 60px Top of the App Header */}
       <header
-        className="relative h-[48px] shrink-0 ml-[88px] flex items-center justify-between select-none bg-[#FCFDFE]/80 backdrop-blur-md border-b border-black/[0.04] z-20"
-        style={{ marginLeft: '88px' }}
+        data-testid="app-header"
+        className="relative w-full h-[60px] shrink-0 flex items-center px-4 select-none bg-[#FCFDFE]/80 backdrop-blur-md border-b border-black/[0.04] z-40"
+        style={{
+          width: '100%',
+          height: '60px',
+          flexShrink: 0,
+        }}
       >
-        {/* Left: Sidebar Toggle Button (left aligns at 24px with sidebar nav icons) */}
-        <div className="flex items-center pl-[20px]">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen((prev) => !prev)}
-            aria-label="Toggle sidebar"
-            title="Toggle sidebar"
-            className="flex items-center justify-center p-[4px] transition-colors hover:bg-[rgba(26,28,30,0.04)] active:scale-95"
-            style={superellipseStyle}
+        {/* 1. menu.svg button — icon-only button, 40x40px hit area, vertically centered */}
+        <button
+          type="button"
+          data-testid="sidebar-toggle-button"
+          aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+          aria-expanded={sidebarOpen}
+          onClick={() => setSidebarOpen((prev) => !prev)}
+          className="group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg hover:bg-black/[0.04] active:scale-95 transition-all focus:outline-none"
+          style={{ width: '40px', height: '40px' }}
+        >
+          <img
+            src="/menu.svg"
+            alt="Menu"
+            className="h-5 w-5 shrink-0 select-none pointer-events-none"
+          />
+          {/* Tooltip on hover */}
+          <span
+            role="tooltip"
+            data-testid="sidebar-toggle-tooltip"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] z-50 whitespace-nowrap rounded-md bg-[#121417] px-2 py-1 text-[11px] font-medium text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
           >
-            <img src="/icons/sidebar.svg" alt="Sidebar" className="h-[20px] w-[20px]" />
-          </button>
-        </div>
+            {sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+          </span>
+        </button>
 
-        {/* Center: Search Bar Horizontally Centered in Viewport */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 pointer-events-auto">
+        {/* 2. wordmark.svg — immediately right of the menu button, vertically centered */}
+        <Link
+          href="/"
+          aria-label="Scribbble"
+          className="ml-3 shrink-0 flex items-center transition-opacity hover:opacity-80"
+        >
+          <img
+            src="/wordmark.svg"
+            alt="Scribbble"
+            data-testid="header-wordmark"
+            className="h-[14px] w-auto"
+          />
+        </Link>
+
+        {/* 3. Search bar — the existing search component, unchanged, placed after the wordmark */}
+        <div className="ml-6 flex items-center min-w-[240px] max-w-[480px] flex-1 sm:flex-initial">
           <SearchBar documents={documents} />
         </div>
 
-        {/* Right: Button Group (notification, help, and header avatar button on far right) */}
-        <div className="flex items-center gap-1.5 pr-4 sm:pr-6 relative">
+        {/* 4. Existing right-side elements — pinned to the right edge via margin-left: auto */}
+        <div className="ml-auto flex items-center gap-1.5 pr-2 sm:pr-4 relative">
           <div className="relative">
             <button
               type="button"
@@ -394,13 +426,26 @@ export function AppShell({
 
       {/* Fixed Left Sidebar Rail + Main Content Area */}
       <div className="flex-1 min-h-0 flex flex-row h-full overflow-hidden bg-[#FCFDFE]">
-        {sidebar}
+        <div
+          data-testid="sidebar-wrapper"
+          className={sidebarOpen ? 'block' : 'hidden'}
+          style={sidebarOpen ? undefined : { display: 'none' }}
+          aria-hidden={!sidebarOpen}
+        >
+          {React.isValidElement(sidebar)
+            ? React.cloneElement(sidebar as React.ReactElement<any>, {
+                open: sidebarOpen,
+              })
+            : sidebar}
+        </div>
 
         {/* Center Content Area shifted right by 88px rail width */}
         <div
           data-testid="app-main-content"
-          className="flex-1 flex flex-col min-w-0 ml-[88px] p-4 sm:p-6 lg:p-8 space-y-6 h-full overflow-y-auto transition-all duration-300"
-          style={{ marginLeft: '88px' }}
+          className={`flex-1 flex flex-col min-w-0 ${
+            sidebarOpen ? 'ml-[88px]' : 'ml-0'
+          } p-4 sm:p-6 lg:p-8 space-y-6 h-full overflow-y-auto transition-all duration-300`}
+          style={{ marginLeft: sidebarOpen ? '88px' : '0px' }}
         >
           {children}
         </div>

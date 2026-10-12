@@ -117,11 +117,14 @@ describe('Issue #27: Left sidebar slim icon rail (Dropbox layout)', () => {
 
   it('shifts main content area right by 88px (margin-left: 88px) and hides nav labels below 768px', () => {
     const shellHtml = renderToString(
-      React.createElement(AppShell, {
-        sidebar: React.createElement(AppSidebar, {}),
-        documents: [],
-        children: React.createElement('div', null, 'Main Content'),
-      })
+      React.createElement(
+        AppShell,
+        {
+          sidebar: React.createElement(AppSidebar, {}),
+          documents: [],
+        },
+        React.createElement('div', null, 'Main Content')
+      )
     )
 
     expect(shellHtml).toContain('data-testid="app-main-content"')
