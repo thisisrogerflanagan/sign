@@ -163,9 +163,16 @@ export default async function ActivityPage(props: ActivityPageProps) {
   return (
     <AppShell
       documents={allDocs || []}
+      userName={
+        user.user_metadata?.display_name || user.email?.split('@')[0] || 'Joe Banks'
+      }
+      userEmail={user.email}
+      requestsSent={requestsSent}
       sidebar={
         <AppSidebar
-          userName={user.user_metadata?.display_name || user.email?.split('@')[0] || 'Joe Banks'}
+          userName={
+            user.user_metadata?.display_name || user.email?.split('@')[0] || 'Joe Banks'
+          }
           userEmail={user.email}
           requestsSent={requestsSent}
         />
@@ -212,7 +219,8 @@ export default async function ActivityPage(props: ActivityPageProps) {
             <GitCommit className="mx-auto h-8 w-8 text-muted-foreground/60" />
             <h3 className="text-sm font-semibold">No activity recorded yet</h3>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-              Status transitions and signing events are logged automatically as tamper-evident audit records.
+              Status transitions and signing events are logged automatically as
+              tamper-evident audit records.
             </p>
           </div>
         ) : (

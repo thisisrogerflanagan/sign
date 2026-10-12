@@ -237,3 +237,25 @@
   color: rgba(26, 28, 30, 0.85);
   font-weight: 400;
 }
+
+.profile-menu-panel {
+  border-radius: 18px;
+  corner-shape: superellipse(1.333);
+  box-shadow:
+    rgba(0, 0, 0, 0.07) 0px 4px 9px 0px,
+    rgba(0, 0, 0, 0.06) 0px 16px 16px 0px,
+    rgba(0, 0, 0, 0.04) 0px 36px 22px 0px,
+    rgba(0, 0, 0, 0.01) 0px 65px 26px 0px,
+    rgba(0, 0, 0, 0) 0px 101px 28px 0px,
+    rgba(0, 0, 0, 0.03) 0px 0px 0px 1px;
+  -webkit-backdrop-filter: saturate(1.5) blur(32px);
+  backdrop-filter: saturate(1.5) blur(32px);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* Fallback for browsers without corner-shape support: plain 18px radius */
+@supports not (corner-shape: superellipse(1)) {
+  .profile-menu-panel {
+    border-radius: 18px;
+  }
+}
