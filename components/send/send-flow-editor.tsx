@@ -113,12 +113,18 @@ export function SendFlowEditor({
   const [isDeleting, setIsDeleting] = useState(false)
 
   // Refs
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map())
+  const pageContainerRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+  const renderTasksRef = useRef<Map<number, any>>(new Map())
+  const renderTokenRef = useRef(0)
+  const scrollTimeoutRef = useRef<number | null>(null)
   const pdfDocRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isDraggingRef = useRef<{
     id: string
+    page: number
     startX: number
     startY: number
     origX: number
@@ -270,17 +276,17 @@ export function SendFlowEditor({
   // High-DPI PDF page rendering
   const renderPage = useCallback(
     async (doc: any, pageNum: number, currentScale: number) => {
-      if (!canvasRef.current || !doc) return
+      const canvas = canvasRefs.current.get(pageNum)
+      if (!canvas || !doc) return
 
       try {
         const page = await doc.getPage(pageNum)
-        const canvas = canvasRef.current
         const context = canvas.getContext('2d')
         if (!context) return
 
         const containerWidth =
           canvas.parentElement?.clientWidth ||
-          (containerRef.current ? containerRef.current.clientWidth - 48 : 960)
+          (scrollContainerRef.current ? scrollContainerRef.current.clientWidth - 48 : 960)
         const baseViewport = page.getViewport({ scale: 1 })
         const fitScale = Math.max(containerWidth / baseViewport.width, currentScale, 1.4)
 
@@ -297,12 +303,44 @@ export function SendFlowEditor({
           viewport,
         }
 
-        await page.render(renderContext).promise
+        // Cancel previous task on this page if still running
+        const existingTask = renderTasksRef.current.get(pageNum)
+        if (existingTask) {
+          try {
+            existingTask.cancel()
+          } catch {}
+        }
+
+        const renderTask = page.render(renderContext)
+        renderTasksRef.current.set(pageNum, renderTask)
+        try {
+          await renderTask.promise
+        } catch (err: any) {
+          if (err?.name !== 'RenderingCancelledException') {
+            console.error(`Failed to render page ${pageNum}:`, err)
+          }
+        } finally {
+          if (renderTasksRef.current.get(pageNum) === renderTask) {
+            renderTasksRef.current.delete(pageNum)
+          }
+        }
       } catch (renderErr) {
-        console.error('Failed to render page:', renderErr)
+        console.error(`Failed to get page ${pageNum}:`, renderErr)
       }
     },
     []
+  )
+
+  const renderAllPages = useCallback(
+    async (doc: any, currentScale: number) => {
+      if (!doc) return
+      const token = ++renderTokenRef.current
+      for (let p = 1; p <= doc.numPages; p++) {
+        if (renderTokenRef.current !== token) return
+        await renderPage(doc, p, currentScale)
+      }
+    },
+    [renderPage]
   )
 
   useEffect(() => {
@@ -310,8 +348,10 @@ export function SendFlowEditor({
 
     let isCancelled = false
 
-    async function loadAndRender() {
+    async function loadDocument() {
       try {
+        setLoading(true)
+        setError(null)
         const pdfjs = await import('pdfjs-dist')
         pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
@@ -322,16 +362,17 @@ export function SendFlowEditor({
         pdfDocRef.current = doc
         setNumPages(doc.numPages)
         setPageCount(doc.numPages)
-        renderPage(doc, currentPage, scale)
+        setLoading(false)
       } catch (err: any) {
         if (!isCancelled) {
-          console.error('Error rendering PDF:', err)
+          console.error('Error loading PDF:', err)
           setError('Failed to load and render PDF pages')
+          setLoading(false)
         }
       }
     }
 
-    loadAndRender()
+    loadDocument()
 
     return () => {
       isCancelled = true
@@ -339,19 +380,91 @@ export function SendFlowEditor({
   }, [pdfUrl])
 
   useEffect(() => {
-    if (pdfDocRef.current) {
-      renderPage(pdfDocRef.current, currentPage, scale)
-    }
+    if (!pdfDocRef.current || loading) return
 
+    renderAllPages(pdfDocRef.current, scale)
+
+    let resizeTimer: NodeJS.Timeout
     function handleResize() {
-      if (pdfDocRef.current) {
-        renderPage(pdfDocRef.current, currentPage, scale)
-      }
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(() => {
+        if (pdfDocRef.current) {
+          renderAllPages(pdfDocRef.current, scale)
+        }
+      }, 150)
     }
 
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [currentPage, scale, renderPage])
+    return () => {
+      clearTimeout(resizeTimer)
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [loading, numPages, scale, renderAllPages])
+
+  useEffect(() => {
+    return () => {
+      renderTasksRef.current.forEach((task) => {
+        try {
+          task.cancel()
+        } catch {}
+      })
+      renderTasksRef.current.clear()
+    }
+  }, [])
+
+  // Smooth scroll to target page in fixed PDF card
+  const scrollToPage = useCallback((pageNum: number) => {
+    const container = scrollContainerRef.current
+    const pageEl = pageContainerRefs.current.get(pageNum)
+    if (container && pageEl) {
+      const targetTop = pageEl.offsetTop - container.offsetTop
+      container.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' })
+    } else if (pageEl) {
+      pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    setCurrentPage(pageNum)
+  }, [])
+
+  // Sync pager indicator with visible page on scroll
+  const handleScroll = useCallback(() => {
+    if (scrollTimeoutRef.current !== null) return
+    scrollTimeoutRef.current = window.requestAnimationFrame(() => {
+      scrollTimeoutRef.current = null
+      const container = scrollContainerRef.current
+      if (!container) return
+
+      const containerTop = container.scrollTop
+      const viewportHeight = container.clientHeight
+      const focalPoint = containerTop + viewportHeight / 3
+
+      let bestPage = currentPage
+      let minDistance = Infinity
+
+      for (let p = 1; p <= numPages; p++) {
+        const pageEl = pageContainerRefs.current.get(p)
+        if (pageEl) {
+          const pageTop = pageEl.offsetTop
+          const pageBottom = pageTop + pageEl.offsetHeight
+          if (focalPoint >= pageTop && focalPoint <= pageBottom) {
+            bestPage = p
+            break
+          }
+          const distance = Math.min(
+            Math.abs(pageTop - focalPoint),
+            Math.abs(pageBottom - focalPoint)
+          )
+          if (distance < minDistance) {
+            minDistance = distance
+            bestPage = p
+          }
+        }
+      }
+
+      if (bestPage !== currentPage) {
+        setCurrentPage(bestPage)
+      }
+    })
+  }, [numPages, currentPage])
 
   // Handle Upload Submission
   async function handleUploadAndContinue() {
@@ -405,7 +518,12 @@ export function SendFlowEditor({
   }
 
   // Adding field helper
-  function addFieldAtCoords(item: PaletteItem, normX: number, normY: number) {
+  function addFieldAtCoords(
+    item: PaletteItem,
+    normX: number,
+    normY: number,
+    targetPage: number = currentPage
+  ) {
     const dims = DEFAULT_DIMENSIONS[item.type]
     const clampedX = Math.max(0, Math.min(1 - dims.width, normX))
     const clampedY = Math.max(0, Math.min(1 - dims.height, normY))
@@ -414,7 +532,7 @@ export function SendFlowEditor({
       id: Math.random().toString(36).substring(2),
       type: item.type,
       label: item.defaultLabel,
-      page: currentPage,
+      page: targetPage,
       x: Number(clampedX.toFixed(4)),
       y: Number(clampedY.toFixed(4)),
       width: dims.width,
@@ -432,7 +550,7 @@ export function SendFlowEditor({
 
     toast({
       title: 'Field added',
-      description: `${item.label} placed on page ${currentPage}.`,
+      description: `${item.label} placed on page ${targetPage}.`,
     })
   }
 
@@ -442,9 +560,11 @@ export function SendFlowEditor({
     e.dataTransfer.dropEffect = 'copy'
   }
 
-  function handleCanvasDrop(e: React.DragEvent) {
+  function handlePageDrop(e: React.DragEvent, targetPage: number) {
     e.preventDefault()
+    e.stopPropagation()
     const itemId = e.dataTransfer.getData('text/plain')
+    if (!itemId) return
     const item = {
       id: itemId,
       type: (itemId === 'initials'
@@ -459,8 +579,9 @@ export function SendFlowEditor({
       icon: FileSignature,
     }
 
-    if (!canvasRef.current) return
-    const rect = canvasRef.current.getBoundingClientRect()
+    const pageEl = pageContainerRefs.current.get(targetPage)
+    if (!pageEl) return
+    const rect = pageEl.getBoundingClientRect()
     const dropX = e.clientX - rect.left
     const dropY = e.clientY - rect.top
 
@@ -468,7 +589,7 @@ export function SendFlowEditor({
     const normX = (dropX - (dims.width * rect.width) / 2) / rect.width
     const normY = (dropY - (dims.height * rect.height) / 2) / rect.height
 
-    addFieldAtCoords(item, normX, normY)
+    addFieldAtCoords(item, normX, normY, targetPage)
   }
 
   // Suggestions actions
@@ -579,6 +700,7 @@ export function SendFlowEditor({
     setActiveFieldId(field.id)
     isDraggingRef.current = {
       id: field.id,
+      page: field.page,
       startX: e.clientX,
       startY: e.clientY,
       origX: field.x,
@@ -586,8 +708,10 @@ export function SendFlowEditor({
     }
 
     function onMouseMove(moveEvent: MouseEvent) {
-      if (!isDraggingRef.current || !canvasRef.current) return
-      const rect = canvasRef.current.getBoundingClientRect()
+      if (!isDraggingRef.current) return
+      const pageEl = pageContainerRefs.current.get(isDraggingRef.current.page)
+      if (!pageEl) return
+      const rect = pageEl.getBoundingClientRect()
       const deltaX = (moveEvent.clientX - isDraggingRef.current.startX) / rect.width
       const deltaY = (moveEvent.clientY - isDraggingRef.current.startY) / rect.height
 
@@ -625,8 +749,8 @@ export function SendFlowEditor({
   }
 
   const activeField = fields.find((f) => f.id === activeFieldId)
-  const pageFields = fields.filter((f) => f.page === currentPage)
   const suggestionCount = fields.filter((f) => f.is_suggestion).length
+  const pages = Array.from({ length: Math.max(1, numPages || 1) }, (_, i) => i + 1)
 
   return (
     <div className="flex h-screen flex-col bg-[#F7F7F8] text-foreground">
@@ -716,7 +840,7 @@ export function SendFlowEditor({
         <main
           ref={containerRef}
           onClick={() => setActiveFieldId(null)}
-          className="flex-1 min-w-0 h-full overflow-auto flex flex-col items-stretch justify-start relative"
+          className="flex-1 min-w-0 h-full overflow-hidden flex flex-col items-stretch justify-start relative"
         >
           {step === 'upload' ? (
             <UploadArea
@@ -736,10 +860,10 @@ export function SendFlowEditor({
               error={uploadError}
             />
           ) : (
-            <div className="w-full flex flex-col items-stretch gap-4 pb-12">
+            <div className="w-full h-full flex flex-col items-stretch gap-3 pb-2">
               {/* Auto-detect suggestions bar */}
               {suggestionCount > 0 && (
-                <div className="w-full bg-amber-50 border border-amber-200/80 rounded-xl px-4 py-2.5 shadow-sm flex items-center justify-between gap-3 text-amber-900 text-xs animate-in fade-in slide-in-from-top-2">
+                <div className="shrink-0 w-full bg-amber-50 border border-amber-200/80 rounded-xl px-4 py-2.5 shadow-sm flex items-center justify-between gap-3 text-amber-900 text-xs animate-in fade-in slide-in-from-top-2">
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
                     <span className="font-medium">
@@ -779,7 +903,7 @@ export function SendFlowEditor({
               <div
                 data-testid="send-header-row"
                 onClick={(e) => e.stopPropagation()}
-                className="w-full flex items-center justify-between gap-4 select-none min-h-[40px]"
+                className="shrink-0 w-full flex items-center justify-between gap-4 select-none min-h-[40px]"
               >
                 {/* Left: prev/next button group (hidden on single-page documents) */}
                 <div className="flex items-center justify-start min-w-[140px]">
@@ -793,7 +917,7 @@ export function SendFlowEditor({
                         type="button"
                         variant="ghost"
                         disabled={currentPage <= 1}
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        onClick={() => scrollToPage(Math.max(1, currentPage - 1))}
                         className={cn(
                           FILTER_GROUP_BUTTON_BASE_CLASS,
                           'inline-flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none'
@@ -812,7 +936,7 @@ export function SendFlowEditor({
                         type="button"
                         variant="ghost"
                         disabled={currentPage >= numPages}
-                        onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
+                        onClick={() => scrollToPage(Math.min(numPages, currentPage + 1))}
                         className={cn(
                           FILTER_GROUP_BUTTON_BASE_CLASS,
                           'inline-flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none'
@@ -858,13 +982,16 @@ export function SendFlowEditor({
                 </div>
               </div>
 
-              {/* Below the header: the PDF as a single card */}
+              {/* Below the header: the PDF as a single fixed card with vertical scrollbar */}
               <div
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
                 data-testid="pdf-page-card"
                 onClick={() => setActiveFieldId(null)}
                 onDragOver={handleCanvasDragOver}
-                onDrop={handleCanvasDrop}
-                className="pdf-page-card w-full relative cursor-default select-none"
+                onDrop={(e) => handlePageDrop(e, currentPage)}
+                style={{ overflowY: 'auto' }}
+                className="pdf-page-card w-full flex-1 min-h-0 relative cursor-default select-none p-4 sm:p-6"
               >
                 {loading && (
                   <div className="flex flex-col items-center justify-center p-16 gap-3 text-muted-foreground min-w-[400px] min-h-[500px]">
@@ -880,216 +1007,246 @@ export function SendFlowEditor({
                   </div>
                 )}
 
-                <canvas
-                  ref={canvasRef}
-                  className={cn('block w-full h-auto', (loading || error) && 'hidden')}
-                />
-
-                {/* Overlaid Placed Fields for Current Page */}
-                {!loading &&
-                  !error &&
-                  pageFields.map((field) => {
-                    const isSelected = activeFieldId === field.id
-                    const isSuggestion = !!field.is_suggestion
-
+                <div
+                  className={cn(
+                    'flex flex-col gap-6 w-full',
+                    (loading || error) && 'hidden'
+                  )}
+                >
+                  {pages.map((pageNum) => {
+                    const pageFields = fields.filter((f) => f.page === pageNum)
                     return (
                       <div
-                        key={field.id}
-                        data-testid={`field-placeholder-${field.id}`}
-                        onMouseDown={(e) => startDragging(e, field)}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setActiveFieldId(field.id)
+                        key={pageNum}
+                        ref={(el) => {
+                          if (el) pageContainerRefs.current.set(pageNum, el)
+                          else pageContainerRefs.current.delete(pageNum)
                         }}
-                        style={{
-                          position: 'absolute',
-                          left: `${field.x * 100}%`,
-                          top: `${field.y * 100}%`,
-                          width: `${field.width * 100}%`,
-                          height: `${field.height * 100}%`,
-                        }}
-                        className={cn(
-                          'field-placeholder group absolute flex items-center justify-between p-1.5 transition-colors cursor-move select-none',
-                          isSelected && 'drag-over z-20',
-                          !isSelected && 'z-10'
-                        )}
+                        data-testid={`pdf-page-${pageNum}`}
+                        data-page-number={pageNum}
+                        onDragOver={handleCanvasDragOver}
+                        onDrop={(e) => handlePageDrop(e, pageNum)}
+                        className="relative w-full rounded-lg overflow-hidden bg-white shadow-xs border border-zinc-200/60"
                       >
-                        <div className="flex items-center gap-1.5 text-[12px] text-[#8A8A8A] font-medium truncate pointer-events-none">
-                          {field.type === 'signature' && (
-                            <FileSignature className="h-3.5 w-3.5 shrink-0" />
-                          )}
-                          {field.type === 'initials' && (
-                            <PenTool className="h-3.5 w-3.5 shrink-0" />
-                          )}
-                          {field.type === 'date' && (
-                            <Calendar className="h-3.5 w-3.5 shrink-0" />
-                          )}
-                          {field.type === 'name' && (
-                            <User className="h-3.5 w-3.5 shrink-0" />
-                          )}
-                          {field.type === 'text' && (
-                            <Type className="h-3.5 w-3.5 shrink-0" />
-                          )}
+                        <canvas
+                          ref={(el) => {
+                            if (el) canvasRefs.current.set(pageNum, el)
+                            else canvasRefs.current.delete(pageNum)
+                          }}
+                          className="block w-full h-auto"
+                        />
 
-                          <span className="truncate">{field.label}</span>
+                        {/* Overlaid Placed Fields for this Page */}
+                        {pageFields.map((field) => {
+                          const isSelected = activeFieldId === field.id
+                          const isSuggestion = !!field.is_suggestion
 
-                          {isSuggestion && (
-                            <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.2 text-[9px] font-medium bg-zinc-200/80 text-zinc-700">
-                              ✨ Suggested
-                            </span>
-                          )}
-
-                          {field.assigned_to === 'sender' && !isSuggestion && (
-                            <span className="inline-flex items-center rounded px-1 py-0.2 text-[9px] font-medium bg-zinc-200/80 text-zinc-700">
-                              {field.value ? 'Signed (Me)' : 'Me'}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Quick action buttons on field hover */}
-                        <div className="flex items-center gap-1">
-                          {isSuggestion && (
-                            <button
-                              type="button"
-                              title="Accept suggestion"
+                          return (
+                            <div
+                              key={field.id}
+                              data-testid={`field-placeholder-${field.id}`}
+                              onMouseDown={(e) => startDragging(e, field)}
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handleAcceptSingleSuggestion(field.id)
+                                setActiveFieldId(field.id)
                               }}
-                              className="bg-zinc-800 hover:bg-zinc-900 text-white p-0.5 rounded shadow-sm transition-all"
+                              style={{
+                                position: 'absolute',
+                                left: `${field.x * 100}%`,
+                                top: `${field.y * 100}%`,
+                                width: `${field.width * 100}%`,
+                                height: `${field.height * 100}%`,
+                              }}
+                              className={cn(
+                                'field-placeholder group absolute flex items-center justify-between p-1.5 transition-colors cursor-move select-none',
+                                isSelected && 'drag-over z-20',
+                                !isSelected && 'z-10'
+                              )}
                             >
-                              <Check className="h-3 w-3" />
-                            </button>
-                          )}
+                              <div className="flex items-center gap-1.5 text-[12px] text-[#8A8A8A] font-medium truncate pointer-events-none">
+                                {field.type === 'signature' && (
+                                  <FileSignature className="h-3.5 w-3.5 shrink-0" />
+                                )}
+                                {field.type === 'initials' && (
+                                  <PenTool className="h-3.5 w-3.5 shrink-0" />
+                                )}
+                                {field.type === 'date' && (
+                                  <Calendar className="h-3.5 w-3.5 shrink-0" />
+                                )}
+                                {field.type === 'name' && (
+                                  <User className="h-3.5 w-3.5 shrink-0" />
+                                )}
+                                {field.type === 'text' && (
+                                  <Type className="h-3.5 w-3.5 shrink-0" />
+                                )}
 
-                          <button
-                            type="button"
-                            title="Delete field"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteField(field.id)
-                            }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
+                                <span className="truncate">{field.label}</span>
 
-                        {/* Floating Field Inspector Popover */}
-                        {isSelected && (
-                          <div
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={(e) => e.stopPropagation()}
-                            style={
-                              field.y > 0.65
-                                ? { bottom: '100%', left: 0, marginBottom: '8px' }
-                                : { top: '100%', left: 0, marginTop: '8px' }
-                            }
-                            className="absolute z-30 w-72 rounded-xl border bg-background p-3.5 shadow-xl text-left cursor-default animate-in fade-in zoom-in-95 space-y-3"
-                          >
-                            <div className="flex items-center justify-between border-b pb-2">
-                              <span className="text-xs font-semibold capitalize text-foreground">
-                                {field.type} Field
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => setActiveFieldId(null)}
-                                className="text-muted-foreground hover:text-foreground"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
+                                {isSuggestion && (
+                                  <span className="inline-flex items-center gap-0.5 rounded px-1 py-0.2 text-[9px] font-medium bg-zinc-200/80 text-zinc-700">
+                                    ✨ Suggested
+                                  </span>
+                                )}
 
-                            <div className="space-y-1">
-                              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                                Label
-                              </Label>
-                              <Input
-                                value={field.label}
-                                onChange={(e) =>
-                                  handleUpdateActiveField({ label: e.target.value })
-                                }
-                                className="h-7 text-xs"
-                                placeholder="e.g. Client signature"
-                              />
-                            </div>
+                                {field.assigned_to === 'sender' && !isSuggestion && (
+                                  <span className="inline-flex items-center rounded px-1 py-0.2 text-[9px] font-medium bg-zinc-200/80 text-zinc-700">
+                                    {field.value ? 'Signed (Me)' : 'Me'}
+                                  </span>
+                                )}
+                              </div>
 
-                            <div className="space-y-1">
-                              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                                Assigned To
-                              </Label>
-                              <div className="grid grid-cols-2 gap-1.5">
+                              {/* Quick action buttons on field hover */}
+                              <div className="flex items-center gap-1">
+                                {isSuggestion && (
+                                  <button
+                                    type="button"
+                                    title="Accept suggestion"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleAcceptSingleSuggestion(field.id)
+                                    }}
+                                    className="bg-zinc-800 hover:bg-zinc-900 text-white p-0.5 rounded shadow-sm transition-all"
+                                  >
+                                    <Check className="h-3 w-3" />
+                                  </button>
+                                )}
+
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    handleUpdateActiveField({ assigned_to: 'signer' })
-                                  }
-                                  className={`py-1 px-2 rounded-lg border text-xs font-medium transition-colors ${
-                                    field.assigned_to === 'signer'
-                                      ? 'border-primary bg-primary/10 text-primary'
-                                      : 'border-border text-muted-foreground hover:bg-muted'
-                                  }`}
+                                  title="Delete field"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDeleteField(field.id)
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-destructive hover:bg-destructive/10"
                                 >
-                                  Signer
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleUpdateActiveField({ assigned_to: 'sender' })
-                                  }
-                                  className={`py-1 px-2 rounded-lg border text-xs font-medium transition-colors ${
-                                    field.assigned_to === 'sender'
-                                      ? 'border-zinc-800 bg-zinc-100 text-zinc-900 font-semibold'
-                                      : 'border-border text-muted-foreground hover:bg-muted'
-                                  }`}
-                                >
-                                  Me (Sender)
+                                  <Trash2 className="h-3 w-3" />
                                 </button>
                               </div>
-                            </div>
 
-                            {field.assigned_to === 'sender' && (
-                              <div className="pt-1">
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="outline"
-                                  className="w-full text-xs h-7"
-                                  onClick={() => setSenderSignModalOpen(true)}
-                                >
-                                  {field.value ? 'Re-sign field' : 'Sign field now'}
-                                </Button>
-                              </div>
-                            )}
-
-                            <div className="flex items-center justify-between pt-1 border-t text-xs">
-                              <label className="flex items-center gap-1.5 cursor-pointer font-medium text-muted-foreground hover:text-foreground">
-                                <input
-                                  type="checkbox"
-                                  checked={field.required}
-                                  onChange={(e) =>
-                                    handleUpdateActiveField({
-                                      required: e.target.checked,
-                                    })
+                              {/* Floating Field Inspector Popover */}
+                              {isSelected && (
+                                <div
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={
+                                    field.y > 0.65
+                                      ? { bottom: '100%', left: 0, marginBottom: '8px' }
+                                      : { top: '100%', left: 0, marginTop: '8px' }
                                   }
-                                  className="rounded border-zinc-300 text-primary h-3.5 w-3.5"
-                                />
-                                <span>Required</span>
-                              </label>
+                                  className="absolute z-30 w-72 rounded-xl border bg-background p-3.5 shadow-xl text-left cursor-default animate-in fade-in zoom-in-95 space-y-3"
+                                >
+                                  <div className="flex items-center justify-between border-b pb-2">
+                                    <span className="text-xs font-semibold capitalize text-foreground">
+                                      {field.type} Field
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setActiveFieldId(null)}
+                                      className="text-muted-foreground hover:text-foreground"
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
 
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteField(field.id)}
-                                className="text-destructive hover:underline text-[11px]"
-                              >
-                                Delete
-                              </button>
+                                  <div className="space-y-1">
+                                    <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                      Label
+                                    </Label>
+                                    <Input
+                                      value={field.label}
+                                      onChange={(e) =>
+                                        handleUpdateActiveField({ label: e.target.value })
+                                      }
+                                      className="h-7 text-xs"
+                                      placeholder="e.g. Client signature"
+                                    />
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                      Assigned To
+                                    </Label>
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleUpdateActiveField({
+                                            assigned_to: 'signer',
+                                          })
+                                        }
+                                        className={`py-1 px-2 rounded-lg border text-xs font-medium transition-colors ${
+                                          field.assigned_to === 'signer'
+                                            ? 'border-primary bg-primary/10 text-primary'
+                                            : 'border-border text-muted-foreground hover:bg-muted'
+                                        }`}
+                                      >
+                                        Signer
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleUpdateActiveField({
+                                            assigned_to: 'sender',
+                                          })
+                                        }
+                                        className={`py-1 px-2 rounded-lg border text-xs font-medium transition-colors ${
+                                          field.assigned_to === 'sender'
+                                            ? 'border-zinc-800 bg-zinc-100 text-zinc-900 font-semibold'
+                                            : 'border-border text-muted-foreground hover:bg-muted'
+                                        }`}
+                                      >
+                                        Me (Sender)
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {field.assigned_to === 'sender' && (
+                                    <div className="pt-1">
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        className="w-full text-xs h-7"
+                                        onClick={() => setSenderSignModalOpen(true)}
+                                      >
+                                        {field.value ? 'Re-sign field' : 'Sign field now'}
+                                      </Button>
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center justify-between pt-1 border-t text-xs">
+                                    <label className="flex items-center gap-1.5 cursor-pointer font-medium text-muted-foreground hover:text-foreground">
+                                      <input
+                                        type="checkbox"
+                                        checked={field.required}
+                                        onChange={(e) =>
+                                          handleUpdateActiveField({
+                                            required: e.target.checked,
+                                          })
+                                        }
+                                        className="rounded border-zinc-300 text-primary h-3.5 w-3.5"
+                                      />
+                                      <span>Required</span>
+                                    </label>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteField(field.id)}
+                                      className="text-destructive hover:underline text-[11px]"
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        )}
+                          )
+                        })}
                       </div>
                     )
                   })}
+                </div>
               </div>
             </div>
           )}
@@ -1101,10 +1258,11 @@ export function SendFlowEditor({
           fields={fields}
           activeFieldId={activeFieldId}
           currentPage={currentPage}
-          onItemClick={(item) => addFieldAtCoords(item, 0.38, 0.45)}
+          onItemClick={(item) => addFieldAtCoords(item, 0.38, 0.45, currentPage)}
           onFieldClick={(id, p) => {
             setCurrentPage(p)
             setActiveFieldId(id)
+            scrollToPage(p)
           }}
           onDeleteField={handleDeleteField}
           onAcceptSuggestion={handleAcceptSingleSuggestion}

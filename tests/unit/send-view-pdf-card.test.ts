@@ -236,4 +236,70 @@ describe('Issue #28: Send doc view PDF card, pager header, and field placeholder
       expect(editorCode).toContain('<FieldPalette')
     })
   })
+
+  describe('Continuous Multi-Page PDF Scroll View & Fixed Card', () => {
+    it('renders fixed card with vertical scrollbar (flex-1 min-h-0 overflow-y: auto) and unscrollable main', () => {
+      const html = renderToString(
+        React.createElement(SendFlowEditor, {
+          initialStep: 'place',
+          initialTitle: 'Contract Agreement',
+          initialNumPages: 3,
+          initialCurrentPage: 1,
+        })
+      )
+
+      // Main element is non-scrolling to keep header pinned
+      expect(html).toContain('overflow-hidden flex flex-col')
+
+      // White background card has fixed flex-1 min-h-0 with vertical scrollbar
+      expect(html).toContain('pdf-page-card w-full flex-1 min-h-0')
+      expect(html).toContain('overflow-y:auto')
+    })
+
+    it('renders all pages sequentially in continuous scroll view with individual canvases', () => {
+      const multiPageFields: PlacedFieldData[] = [
+        ...sampleFields,
+        {
+          id: 'f4',
+          type: 'signature',
+          label: 'Client Signature Page 2',
+          page: 2,
+          x: 0.25,
+          y: 0.6,
+          width: 0.24,
+          height: 0.055,
+          required: true,
+          assigned_to: 'signer',
+          value: null,
+        },
+      ]
+
+      const html = renderToString(
+        React.createElement(SendFlowEditor, {
+          initialStep: 'place',
+          initialTitle: '3-Page Commercial Agreement',
+          initialNumPages: 3,
+          initialCurrentPage: 1,
+          initialFields: multiPageFields,
+        })
+      )
+
+      // Renders all 3 pages sequentially
+      expect(html).toContain('data-testid="pdf-page-1"')
+      expect(html).toContain('data-testid="pdf-page-2"')
+      expect(html).toContain('data-testid="pdf-page-3"')
+
+      // Page 1 contains sampleFields
+      expect(html).toContain('data-testid="field-placeholder-f1"')
+      expect(html).toContain('Signature')
+
+      // Page 2 contains field f4
+      expect(html).toContain('data-testid="field-placeholder-f4"')
+      expect(html).toContain('Client Signature Page 2')
+
+      // 3 canvas elements rendered for the 3 pages
+      const canvasMatches = html.match(/<canvas[^>]*class="block w-full h-auto"/g)
+      expect(canvasMatches).toHaveLength(3)
+    })
+  })
 })
