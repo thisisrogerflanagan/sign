@@ -125,6 +125,11 @@ export default async function HomePage(props: HomePageProps) {
   return (
     <AppShell
       documents={documents || []}
+      userName={
+        user.user_metadata?.display_name || user.email?.split('@')[0] || 'Joe Banks'
+      }
+      userEmail={user.email}
+      requestsSent={requestsSent}
       sidebar={
         <AppSidebar
           userName={

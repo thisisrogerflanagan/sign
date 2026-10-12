@@ -1,16 +1,18 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
-  ChevronDown,
+  Home,
+  Folder,
+  Bell,
+  LayoutGrid,
   Settings,
+  CircleHelp,
   LogOut,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import { QuotaWidget } from '@/components/quota-widget'
 
 interface AppSidebarProps {
   userName?: string
@@ -19,17 +21,11 @@ interface AppSidebarProps {
   requestsSent?: number
 }
 
-export function AppSidebar({
-  userName = 'Joe Banks',
-  userEmail,
-  userAvatar,
-  requestsSent = 0,
-}: AppSidebarProps) {
+export function AppSidebar(_props: AppSidebarProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const status = searchParams?.get('status')
   const router = useRouter()
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false)
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -38,141 +34,173 @@ export function AppSidebar({
     router.refresh()
   }
 
+  const navItems = [
+    {
+      label: 'New Document',
+      href: '/send',
+      icon: LayoutGrid,
+      active: pathname === '/send',
+    },
+    {
+      label: 'All Docs',
+      href: '/',
+      icon: Home,
+      active: pathname === '/' && (!status || status === 'all'),
+    },
+    {
+      label: 'Archive',
+      href: '/?status=voided',
+      icon: Folder,
+      active: status === 'voided',
+    },
+    {
+      label: 'Activity',
+      href: '/activity',
+      icon: Bell,
+      active: pathname === '/activity',
+    },
+  ]
+
   return (
-    <aside className="w-[268px] min-h-full shrink-0 flex flex-col justify-between pt-2 px-2.5 pb-3 select-none">
-      <div className="space-y-5">
-        {/* User Switcher Pill & New Document */}
-        <div className="space-y-2">
-          {/* User Switcher Pill / Profile Button */}
-          <div className="relative">
-              <button
-                type="button"
-                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className={cn(
-                  'flex items-center gap-2.5 rounded-xl transition-colors px-2.5 py-1.5 text-sm font-semibold text-[rgba(26,28,30,0.85)] w-fit',
-                  userDropdownOpen
-                    ? 'bg-[rgba(26,28,30,0.06)]'
-                    : 'hover:bg-[rgba(26,28,30,0.06)]'
-                )}
+    <aside
+      data-testid="app-sidebar"
+      className="fixed top-0 left-0 z-30 w-[88px] h-screen bg-white border-r border-black/[0.04] shrink-0 flex flex-col items-center justify-between pt-[20px] pb-[20px] select-none"
+      style={{
+        width: '88px',
+        height: '100vh',
+        backgroundColor: '#FFFFFF',
+        paddingTop: '20px',
+        paddingBottom: '20px',
+      }}
+    >
+      {/* Top: Logo + Primary Nav */}
+      <div className="flex flex-col items-center w-full">
+        {/* Scribbble Logo Mark (centered, 32px) */}
+        <Link
+          href="/"
+          aria-label="Scribbble"
+          data-testid="sidebar-logo"
+          className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-lg bg-[#111111] text-white text-sm font-bold leading-none"
+          style={{ width: '32px', height: '32px' }}
+        >
+          S
+        </Link>
+
+        {/* Primary Nav Stack (first item 24px below logo, 24px vertical gap) */}
+        <nav
+          aria-label="Primary navigation"
+          className="mt-[24px] flex flex-col items-center gap-[24px] w-full"
+          style={{ marginTop: '24px', gap: '24px' }}
+        >
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = Boolean(item.active)
+
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                data-active={isActive}
+                aria-current={isActive ? 'page' : undefined}
+                className="sidebar-rail-item flex flex-col items-center justify-center gap-1 w-full text-center no-underline cursor-pointer"
+                style={{ color: isActive ? '#111111' : '#737373' }}
               >
-                {userAvatar ? (
-                  <img
-                    src={userAvatar}
-                    alt={userName}
-                    className="h-6 w-6 rounded-lg object-cover"
-                  />
+                {isActive ? (
+                  <span
+                    data-testid="active-nav-pill"
+                    className="flex items-center justify-center bg-[#F1F1F1] rounded-[16px] py-[10px] px-[20px] text-[#111111]"
+                    style={{
+                      backgroundColor: '#F1F1F1',
+                      borderRadius: '16px',
+                      padding: '10px 20px',
+                      color: '#111111',
+                      ...({
+                        cornerShape: 'superellipse(1.333)',
+                        WebkitCornerShape: 'superellipse(1.333)',
+                      } as React.CSSProperties),
+                    }}
+                  >
+                    <Icon
+                      size={24}
+                      strokeWidth={2}
+                      className="h-[24px] w-[24px] shrink-0 text-[#111111]"
+                      style={{ color: '#111111' }}
+                    />
+                  </span>
                 ) : (
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-zinc-800 text-white text-xs font-bold">
-                    {userName.charAt(0)}
-                  </div>
+                  <Icon
+                    size={24}
+                    strokeWidth={2}
+                    className="h-[24px] w-[24px] shrink-0 text-[#737373]"
+                    style={{ color: '#737373' }}
+                  />
                 )}
-                <span className="truncate max-w-[120px]">{userName}</span>
-                <ChevronDown className="h-4 w-4 text-[rgba(26,28,30,0.85)] ml-0.5" />
-              </button>
-
-            {/* User Menu Dropdown */}
-            {userDropdownOpen && (
-              <div
-                className="absolute left-0 top-12 z-30 w-52 rounded-xl border bg-card p-1.5 shadow-lg text-xs animate-in fade-in zoom-in-95"
-                onMouseLeave={() => setUserDropdownOpen(false)}
-              >
-                <div className="px-2.5 py-1.5 text-muted-foreground truncate border-b mb-1">
-                  {userEmail || userName}
-                </div>
-                <Link
-                  href="/settings"
-                  onClick={() => setUserDropdownOpen(false)}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 hover:bg-muted text-foreground"
+                <span
+                  className="sidebar-rail-label hidden md:block text-[12px] leading-tight font-medium"
+                  style={{
+                    fontSize: '12px',
+                    color: isActive ? '#111111' : '#737373',
+                  }}
                 >
-                  <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-                  Settings
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 hover:bg-destructive/10 text-destructive text-left"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  Sign out
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Primary Action: New Document */}
-          <div>
-            <Link
-              href="/send"
-              className="sidebar-element"
-              data-active={pathname === '/send'}
-              style={{ ['--indent-level' as any]: 0 }}
-            >
-              <img
-                src="/icons/add_doc.svg"
-                alt=""
-                className="h-[18px] w-[18px] shrink-0"
-                aria-hidden="true"
-              />
-              <span>New Document</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Primary Nav List */}
-        <div className="space-y-0.5">
-          {/* All Docs */}
-          <Link
-            href="/"
-            className="sidebar-element"
-            data-active={pathname === '/' && (!status || status === 'all')}
-            style={{ ['--indent-level' as any]: 0 }}
-          >
-            <img
-              src="/icons/docs.svg"
-              alt=""
-              className="h-[18px] w-[18px] shrink-0"
-              aria-hidden="true"
-            />
-            <span>All Docs</span>
-          </Link>
-
-          {/* Archive */}
-          <Link
-            href="/?status=voided"
-            className="sidebar-element"
-            data-active={status === 'voided'}
-            style={{ ['--indent-level' as any]: 0 }}
-          >
-            <img
-              src="/icons/archive.svg"
-              alt=""
-              className="h-[18px] w-[18px] shrink-0"
-              aria-hidden="true"
-            />
-            <span>Archive</span>
-          </Link>
-
-          {/* Activity */}
-          <Link
-            href="/activity"
-            className="sidebar-element"
-            data-active={pathname === '/activity'}
-            style={{ ['--indent-level' as any]: 0 }}
-          >
-            <img
-              src="/icons/logbook.svg"
-              alt=""
-              className="h-[18px] w-[18px] shrink-0"
-              aria-hidden="true"
-            />
-            <span>Activity</span>
-          </Link>
-        </div>
+                  {item.label}
+                </span>
+              </Link>
+            )
+          })}
+        </nav>
       </div>
 
-      {/* Monthly Quota Box pinned at the bottom */}
-      <div className="mt-auto pt-6 pb-1">
-        <QuotaWidget used={requestsSent} limit={50} />
+      {/* Bottom: Secondary Icon-Only Actions (pinned to bottom with 20px bottom padding) */}
+      <div
+        data-testid="sidebar-bottom-group"
+        className="mt-auto flex flex-col items-center gap-[24px] w-full"
+        style={{ gap: '24px' }}
+      >
+        <Link
+          href="/settings"
+          aria-label="Settings"
+          title="Settings"
+          className="flex items-center justify-center text-[#737373] hover:text-[#111111] transition-colors"
+          style={{ color: '#737373' }}
+        >
+          <Settings
+            size={24}
+            strokeWidth={2}
+            className="h-[24px] w-[24px] shrink-0 text-[#737373]"
+            style={{ color: '#737373' }}
+          />
+        </Link>
+
+        <button
+          type="button"
+          aria-label="Help"
+          title="Help"
+          className="flex items-center justify-center text-[#737373] hover:text-[#111111] transition-colors"
+          style={{ color: '#737373' }}
+        >
+          <CircleHelp
+            size={24}
+            strokeWidth={2}
+            className="h-[24px] w-[24px] shrink-0 text-[#737373]"
+            style={{ color: '#737373' }}
+          />
+        </button>
+
+        <button
+          type="button"
+          onClick={handleSignOut}
+          aria-label="Sign out"
+          title="Sign out"
+          className="flex items-center justify-center text-[#737373] hover:text-[#111111] transition-colors"
+          style={{ color: '#737373' }}
+        >
+          <LogOut
+            size={24}
+            strokeWidth={2}
+            className="h-[24px] w-[24px] shrink-0 text-[#737373]"
+            style={{ color: '#737373' }}
+          />
+        </button>
       </div>
     </aside>
   )
