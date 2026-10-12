@@ -82,7 +82,7 @@ export function SendFlowEditor({
   const [fileSizeBytes, setFileSizeBytes] = useState<number | undefined>(undefined)
   const [docCreatedAt, setDocCreatedAt] = useState<string | null>(null)
   const [docUpdatedAt, setDocUpdatedAt] = useState<string | null>(null)
-  const [docAuthor, setDocAuthor] = useState<string>('Roger Flanagan')
+  const [docAuthor, setDocAuthor] = useState<string>('Johnny Maitai')
   const [docStatus, setDocStatus] = useState<string>('draft')
   const [pageCount, setPageCount] = useState<number>(initialNumPages)
   const [signers, setSigners] = useState<any[]>([])
@@ -681,6 +681,9 @@ export function SendFlowEditor({
           pageCount={pageCount}
           fileSizeBytes={fileSizeBytes || uploadFile?.size}
           uploadDate={docCreatedAt}
+          createdAt={docCreatedAt}
+          updatedAt={docUpdatedAt}
+          author={docAuthor}
           status={docStatus}
           fields={fields}
           signersCount={signers.length}

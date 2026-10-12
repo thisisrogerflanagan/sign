@@ -75,107 +75,78 @@ describe('Issue #23: Upload UX Sidebar Layout', () => {
     },
   ]
 
-  describe('Left Panel (InfoPanel) - 4 Tabs & Real Document Data', () => {
-    it('renders navigation with 4 tabs: Properties, Review, Actions, Stats', () => {
+  describe('Left Panel (InfoPanel) - Document Info Layout', () => {
+    it('renders "Document Info" title and does not render pill tabs', () => {
       const html = renderToString(
         React.createElement(InfoPanel, {
           hasDocument: true,
           fields: sampleFields,
-          activeTab: 'properties',
         })
       )
 
-      expect(html).toContain('Properties')
-      expect(html).toContain('Review')
-      expect(html).toContain('Actions')
-      expect(html).toContain('Stats')
+      expect(html).toContain('Document Info')
+      expect(html).toContain('#3B3B3D')
+      expect(html).not.toContain('grid-cols-4')
+      expect(html).not.toContain('Stats')
+      expect(html).not.toContain('Danger Zone')
     })
 
-    it('Properties tab displays real metadata: file name, page count, file size, and upload date', () => {
+    it('renders PROPERTIES section with Created, Updated, and Author', () => {
       const html = renderToString(
         React.createElement(InfoPanel, {
           hasDocument: true,
-          documentTitle: 'Partnership Agreement',
-          fileName: 'partnership_final.pdf',
-          pageCount: 4,
-          fileSizeBytes: 2450000,
-          uploadDate: '2026-10-07T12:00:00.000Z',
-          fields: sampleFields,
-          activeTab: 'properties',
+          createdAt: '4 days ago',
+          updatedAt: '10 minutes ago',
+          author: 'Johnny Maitai',
         })
       )
 
-      expect(html).toContain('partnership_final.pdf')
-      expect(html).toContain('4 pages')
-      expect(html).toContain('2.34 MB')
-      expect(html).toContain('Oct 7, 2026')
+      expect(html).toContain('PROPERTIES')
+      expect(html).toContain('Created:')
+      expect(html).toContain('4 days ago')
+      expect(html).toContain('Updated:')
+      expect(html).toContain('10 minutes ago')
+      expect(html).toContain('Author:')
+      expect(html).toContain('Johnny Maitai')
+      expect(html).toContain('/icons/calendar.svg')
+      expect(html).toContain('/icons/author.svg')
     })
 
-    it('Review tab shows pre-send checklist with check and warning states', () => {
-      // 1. With required fields placed, 1 signer, and sender signed
-      const passingHtml = renderToString(
-        React.createElement(InfoPanel, {
-          hasDocument: true,
-          fields: sampleFields,
-          signersCount: 1,
-          activeTab: 'review',
-        })
-      )
-
-      expect(passingHtml).toContain('Required fields')
-      expect(passingHtml).toContain('Ready')
-      expect(passingHtml).toContain('Signer recipient')
-      expect(passingHtml).toContain('Added')
-      expect(passingHtml).toContain('Sender signature')
-
-      // 2. With no fields placed and 0 signers
-      const warningHtml = renderToString(
-        React.createElement(InfoPanel, {
-          hasDocument: true,
-          fields: [],
-          signersCount: 0,
-          activeTab: 'review',
-        })
-      )
-
-      expect(warningHtml).toContain('Pending')
-      expect(warningHtml).toContain('At least one signer is required before sending')
-    })
-
-    it('Actions tab renders Save draft, Send document, and separated Delete draft', () => {
-      const html = renderToString(
-        React.createElement(InfoPanel, {
-          hasDocument: true,
-          fields: sampleFields,
-          activeTab: 'actions',
-        })
-      )
-
-      expect(html).toContain('Save draft')
-      expect(html).toContain('Send document')
-      expect(html).toContain('continue-to-review-button')
-      expect(html).toContain('Delete draft')
-      expect(html).toContain('Danger Zone')
-    })
-
-    it('Stats tab shows live counts by field type, signers added, and document status', () => {
-      const html = renderToString(
+    it('renders REVIEW section with 4 lifecycle steps and status-based icons', () => {
+      // 1. In draft status: Document Created is completed, rest pending
+      const draftHtml = renderToString(
         React.createElement(InfoPanel, {
           hasDocument: true,
           status: 'draft',
-          signersCount: 2,
-          fields: sampleFields,
-          activeTab: 'stats',
         })
       )
 
-      // Signature: 2, Initials: 1, Date: 1, Text: 1
-      expect(html).toContain('Signature')
-      expect(html).toContain('Initials')
-      expect(html).toContain('Date')
-      expect(html).toContain('Text')
-      expect(html).toContain('Signers added')
-      expect(html).toContain('draft')
+      expect(draftHtml).toContain('REVIEW')
+      expect(draftHtml).toContain('Document Created')
+      expect(draftHtml).toContain('Sent to Client')
+      expect(draftHtml).toContain('Viewed by Client')
+      expect(draftHtml).toContain('Document Completed')
+      expect(draftHtml).toContain('/icons/review_completed.svg')
+      expect(draftHtml).toContain('/icons/review_empty.svg')
+
+      // 2. In sent status: Document Created & Sent to Client completed
+      const sentHtml = renderToString(
+        React.createElement(InfoPanel, {
+          hasDocument: true,
+          status: 'sent',
+        })
+      )
+      expect(sentHtml).toContain('Document Created')
+      expect(sentHtml).toContain('Sent to Client')
+
+      // 3. In completed status: all steps completed
+      const completedHtml = renderToString(
+        React.createElement(InfoPanel, {
+          hasDocument: true,
+          status: 'completed',
+        })
+      )
+      expect(completedHtml).not.toContain('/icons/review_empty.svg')
     })
   })
 
