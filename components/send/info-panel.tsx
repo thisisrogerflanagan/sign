@@ -133,35 +133,46 @@ export function InfoPanel({
           PROPERTIES
         </h2>
 
-        <div className="mt-4 flex flex-col gap-3.5">
+        <div className="mt-3 flex flex-col gap-1.5">
           {/* Created */}
-          <div className="flex items-center gap-3 text-[15px]">
+          <div className="flex items-center gap-2.5 text-[15px]">
             <img src="/icons/calendar.svg" alt="Created" className="w-6 h-6 shrink-0" />
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-[#1A1C1E]/40 font-medium">Created:</span>
-              <span className="text-[#1A1C1E] font-medium truncate">
+            <div className="flex items-baseline min-w-0">
+              <span className="text-[#1A1C1E]/40 font-medium mr-1.5">Created:</span>
+              <span
+                className="text-[#1A1C1E] font-normal truncate"
+                style={{ fontFamily: '"Airbnb Cereal", sans-serif', fontWeight: 400 }}
+              >
                 {displayCreated}
               </span>
             </div>
           </div>
 
           {/* Updated */}
-          <div className="flex items-center gap-3 text-[15px]">
+          <div className="flex items-center gap-2.5 text-[15px]">
             <img src="/icons/calendar.svg" alt="Updated" className="w-6 h-6 shrink-0" />
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-[#1A1C1E]/40 font-medium">Updated:</span>
-              <span className="text-[#1A1C1E] font-medium truncate">
+            <div className="flex items-baseline min-w-0">
+              <span className="text-[#1A1C1E]/40 font-medium mr-1.5">Updated:</span>
+              <span
+                className="text-[#1A1C1E] font-normal truncate"
+                style={{ fontFamily: '"Airbnb Cereal", sans-serif', fontWeight: 400 }}
+              >
                 {displayUpdated}
               </span>
             </div>
           </div>
 
           {/* Author */}
-          <div className="flex items-center gap-3 text-[15px]">
+          <div className="flex items-center gap-2.5 text-[15px]">
             <img src="/icons/author.svg" alt="Author" className="w-6 h-6 shrink-0" />
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-[#1A1C1E]/40 font-medium">Author:</span>
-              <span className="text-[#1A1C1E] font-medium truncate">{displayAuthor}</span>
+            <div className="flex items-baseline min-w-0">
+              <span className="text-[#1A1C1E]/40 font-medium mr-1.5">Author:</span>
+              <span
+                className="text-[#1A1C1E] font-normal truncate"
+                style={{ fontFamily: '"Airbnb Cereal", sans-serif', fontWeight: 400 }}
+              >
+                {displayAuthor}
+              </span>
             </div>
           </div>
         </div>

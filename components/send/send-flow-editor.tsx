@@ -278,13 +278,19 @@ export function SendFlowEditor({
         const context = canvas.getContext('2d')
         if (!context) return
 
+        const containerWidth =
+          canvas.parentElement?.clientWidth ||
+          (containerRef.current ? containerRef.current.clientWidth - 48 : 960)
+        const baseViewport = page.getViewport({ scale: 1 })
+        const fitScale = Math.max(containerWidth / baseViewport.width, currentScale, 1.4)
+
         const outputScale = window.devicePixelRatio || 1
-        const viewport = page.getViewport({ scale: currentScale * outputScale })
+        const viewport = page.getViewport({ scale: fitScale * outputScale })
 
         canvas.width = Math.floor(viewport.width)
         canvas.height = Math.floor(viewport.height)
-        canvas.style.width = Math.floor(viewport.width / outputScale) + 'px'
-        canvas.style.height = Math.floor(viewport.height / outputScale) + 'px'
+        canvas.style.width = '100%'
+        canvas.style.height = 'auto'
 
         const renderContext = {
           canvasContext: context,
@@ -336,6 +342,15 @@ export function SendFlowEditor({
     if (pdfDocRef.current) {
       renderPage(pdfDocRef.current, currentPage, scale)
     }
+
+    function handleResize() {
+      if (pdfDocRef.current) {
+        renderPage(pdfDocRef.current, currentPage, scale)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [currentPage, scale, renderPage])
 
   // Handle Upload Submission
@@ -701,7 +716,7 @@ export function SendFlowEditor({
         <main
           ref={containerRef}
           onClick={() => setActiveFieldId(null)}
-          className="flex-1 min-w-0 h-full overflow-auto flex flex-col items-center justify-start relative"
+          className="flex-1 min-w-0 h-full overflow-auto flex flex-col items-stretch justify-start relative"
         >
           {step === 'upload' ? (
             <UploadArea
@@ -721,7 +736,7 @@ export function SendFlowEditor({
               error={uploadError}
             />
           ) : (
-            <div className="w-fit max-w-full flex flex-col items-stretch gap-4 pb-12">
+            <div className="w-full flex flex-col items-stretch gap-4 pb-12">
               {/* Auto-detect suggestions bar */}
               {suggestionCount > 0 && (
                 <div className="w-full bg-amber-50 border border-amber-200/80 rounded-xl px-4 py-2.5 shadow-sm flex items-center justify-between gap-3 text-amber-900 text-xs animate-in fade-in slide-in-from-top-2">
@@ -849,7 +864,7 @@ export function SendFlowEditor({
                 onClick={() => setActiveFieldId(null)}
                 onDragOver={handleCanvasDragOver}
                 onDrop={handleCanvasDrop}
-                className="pdf-page-card relative cursor-default select-none mx-auto"
+                className="pdf-page-card w-full relative cursor-default select-none"
               >
                 {loading && (
                   <div className="flex flex-col items-center justify-center p-16 gap-3 text-muted-foreground min-w-[400px] min-h-[500px]">
@@ -867,7 +882,7 @@ export function SendFlowEditor({
 
                 <canvas
                   ref={canvasRef}
-                  className={cn('block', (loading || error) && 'hidden')}
+                  className={cn('block w-full h-auto', (loading || error) && 'hidden')}
                 />
 
                 {/* Overlaid Placed Fields for Current Page */}
