@@ -15,6 +15,22 @@ const STATUS_FILTERS = [
   { key: 'voided', label: 'Cancelled' },
 ]
 
+export const FILTER_GROUP_CONTAINER_STYLE: React.CSSProperties = {
+  background: 'white',
+  boxShadow: SQUIRCLE_BOX_SHADOW,
+  borderRadius: '12px',
+  padding: '4px',
+  ...({
+    cornerShape: 'superellipse(1.333)',
+    WebkitCornerShape: 'superellipse(1.333)',
+  } as any),
+}
+
+export const FILTER_GROUP_CONTAINER_CLASS = 'flex items-center gap-0.5 h-[40px] shrink-0'
+
+export const FILTER_GROUP_BUTTON_BASE_CLASS =
+  'h-[32px] px-3 text-[13px] font-medium rounded-[8px] transition-colors whitespace-nowrap text-[#121417] hover:bg-[rgba(26,28,30,0.04)]'
+
 export function HomeFeedFilters() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -38,24 +54,10 @@ export function HomeFeedFilters() {
     })
   }
 
-  const containerStyle: React.CSSProperties = {
-    background: 'white',
-    boxShadow: SQUIRCLE_BOX_SHADOW,
-    borderRadius: '12px',
-    padding: '4px',
-    ...({
-      cornerShape: 'superellipse(1.333)',
-      WebkitCornerShape: 'superellipse(1.333)',
-    } as any),
-  }
-
   return (
     <div className="flex items-center gap-2 select-none shrink-0">
       {/* Filter Button Group */}
-      <div
-        className="flex items-center gap-0.5 h-[40px] shrink-0"
-        style={containerStyle}
-      >
+      <div className={FILTER_GROUP_CONTAINER_CLASS} style={FILTER_GROUP_CONTAINER_STYLE}>
         {STATUS_FILTERS.map((filter) => {
           const isActive = currentStatus === filter.key
           return (
@@ -64,10 +66,8 @@ export function HomeFeedFilters() {
               type="button"
               onClick={() => updateStatus(filter.key)}
               className={cn(
-                'h-[32px] px-3 text-[13px] font-medium rounded-[8px] transition-colors whitespace-nowrap',
-                isActive
-                  ? 'bg-[rgba(26,28,30,0.06)] text-[#121417]'
-                  : 'text-[#121417] hover:bg-[rgba(26,28,30,0.04)]'
+                FILTER_GROUP_BUTTON_BASE_CLASS,
+                isActive && 'bg-[rgba(26,28,30,0.06)] hover:bg-[rgba(26,28,30,0.06)]'
               )}
             >
               {filter.label}
