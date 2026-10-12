@@ -80,10 +80,10 @@ export function AppSidebar(_props: AppSidebarProps) {
           href="/"
           aria-label="Scribbble"
           data-testid="sidebar-logo"
-          className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-lg bg-[#111111] text-white text-sm font-bold leading-none"
+          className="flex h-[32px] w-[32px] shrink-0 items-center justify-center transition-opacity hover:opacity-80"
           style={{ width: '32px', height: '32px' }}
         >
-          S
+          <img src="/logo.svg" alt="Scribbble" className="h-[28px] w-[28px]" />
         </Link>
 
         {/* Primary Nav Stack (first item 24px below logo, 24px vertical gap) */}
