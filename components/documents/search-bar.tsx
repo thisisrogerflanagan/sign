@@ -2,99 +2,153 @@
 
 import * as React from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useTransition, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { X } from 'lucide-react'
+import { getStatusBadgeInfo } from '@/lib/document-helpers'
+import { DocumentStatus } from '@/lib/supabase/types'
+import { cn } from '@/lib/utils'
 
-export interface SearchItem {
+export interface SearchSigner {
+  id?: string
+  name?: string | null
+  email: string
+}
+
+export interface SearchDocument {
   id: string
   title: string
-  subsection: string
-  badgeColor: string
-  badgeText?: string
-  hasImageBanner?: boolean
-  url?: string
+  status?: string
+  page_count?: number | null
+  created_at?: string
+  updated_at?: string
+  signers?: SearchSigner[] | SearchSigner
 }
 
 export interface SearchBarProps {
-  documents?: Array<{
-    id: string
-    title: string
-    status?: string
-  }>
+  documents?: SearchDocument[]
   defaultOpen?: boolean
 }
 
-const DEFAULT_DOCUMENTS: SearchItem[] = [
-  {
-    id: 'doc-mock-1',
-    title: 'Untitled Document',
-    subsection: 'The Flanagans',
-    badgeColor: '#4CA4B7',
-  },
-  {
-    id: 'doc-mock-2',
-    title: '🦷 Dental Surgery',
-    subsection: 'The Flanagans',
-    badgeColor: '#4CA4B7',
-    hasImageBanner: true,
-  },
-  {
-    id: 'doc-mock-3',
-    title: 'Untitled Document',
-    subsection: 'The Flanagans',
-    badgeColor: '#4CA4B7',
-  },
-  {
-    id: 'doc-mock-4',
-    title: '🪀 [2s TTH] Bluebird Christian Pre-School',
-    subsection: 'The Flanagans',
-    badgeColor: '#4CA4B7',
-  },
-  {
-    id: 'doc-mock-5',
-    title: '🥡 Food',
-    subsection: 'The Flanagans',
-    badgeColor: '#4CA4B7',
-  },
-  {
-    id: 'doc-mock-6',
-    title: '💡 Product Inspiration',
-    subsection: 'Meltdown',
-    badgeColor: '#D31E44',
-    badgeText: 'M',
-  },
-  {
-    id: 'doc-mock-7',
-    title: 'Changelog',
-    subsection: 'WhatsApp',
-    badgeColor: '#25D366',
-    badgeText: 'W',
-  },
-]
+export function getRecipientSubtitle(doc: SearchDocument): string {
+  const signersList = Array.isArray(doc.signers)
+    ? doc.signers
+    : doc.signers
+      ? [doc.signers]
+      : []
 
-const SUBSECTIONS = [
-  { name: 'The Flanagans', badgeColor: '#4CA4B7', count: 5 },
-  { name: 'Meltdown', badgeColor: '#D31E44', badgeText: 'M', count: 1 },
-  { name: 'WhatsApp', badgeColor: '#25D366', badgeText: 'W', count: 1 },
-]
+  if (signersList.length === 0) return 'No recipient'
+
+  const first = signersList[0]
+  const moreCount = signersList.length - 1
+  const moreSuffix = moreCount > 0 ? ` +${moreCount} more` : ''
+
+  if (first.name && first.email) {
+    return `${first.name} (${first.email})${moreSuffix}`
+  }
+  return `${first.name || first.email || 'No recipient'}${moreSuffix}`
+}
+
+export function filterDocuments<T extends SearchDocument>(docs: T[], query: string): T[] {
+  if (!query.trim()) {
+    return [...docs]
+      .sort((a, b) => {
+        const timeA = new Date(a.updated_at || a.created_at || 0).getTime()
+        const timeB = new Date(b.updated_at || b.created_at || 0).getTime()
+        return timeB - timeA
+      })
+      .slice(0, 5)
+  }
+
+  const lowerQ = query.trim().toLowerCase()
+  return docs.filter((doc) => {
+    const titleMatch = Boolean(doc.title && doc.title.toLowerCase().includes(lowerQ))
+    const signersList = Array.isArray(doc.signers)
+      ? doc.signers
+      : doc.signers
+        ? [doc.signers]
+        : []
+    const recipientMatch = signersList.some((s) => {
+      const nameMatch = Boolean(s.name && s.name.toLowerCase().includes(lowerQ))
+      const emailMatch = Boolean(s.email && s.email.toLowerCase().includes(lowerQ))
+      return nameMatch || emailMatch
+    })
+    return titleMatch || recipientMatch
+  })
+}
 
 export function SearchBar({ documents, defaultOpen = false }: SearchBarProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [, startTransition] = useTransition()
 
   const currentQuery = searchParams.get('q') || ''
   const [search, setSearch] = useState(currentQuery)
+  const [debouncedQuery, setDebouncedQuery] = useState(currentQuery)
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [isFocused, setIsFocused] = useState(false)
+  const [remoteDocuments, setRemoteDocuments] = useState<SearchDocument[] | null>(null)
 
   const containerRef = useRef<HTMLDivElement>(null)
 
+  // Sync search state with searchParams ?q=
   useEffect(() => {
     setSearch(currentQuery)
   }, [currentQuery])
 
-  // Handle click outside & escape key
+  // Debounce input by ~250ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(search)
+    }, 250)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  // Fetch real documents dynamically from API
+  useEffect(() => {
+    let isMounted = true
+    const trimmed = debouncedQuery.trim()
+    const url = trimmed
+      ? `/api/documents?q=${encodeURIComponent(trimmed)}`
+      : '/api/documents'
+
+    fetch(url)
+      .then((res) => {
+        if (res.ok) return res.json()
+        throw new Error('Failed to fetch')
+      })
+      .then((data) => {
+        if (isMounted && Array.isArray(data?.documents)) {
+          setRemoteDocuments(data.documents)
+        }
+      })
+      .catch(() => {
+        // Ignore network errors or SSR / test environments
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [debouncedQuery])
+
+  // Determine displayed items:
+  // If remoteDocuments were loaded from API, use them.
+  // Otherwise, filter props documents in memory.
+  const displayedItems = useMemo(() => {
+    if (remoteDocuments !== null) {
+      if (!debouncedQuery.trim()) {
+        return [...remoteDocuments]
+          .sort((a, b) => {
+            const timeA = new Date(a.updated_at || a.created_at || 0).getTime()
+            const timeB = new Date(b.updated_at || b.created_at || 0).getTime()
+            return timeB - timeA
+          })
+          .slice(0, 5)
+      }
+      return remoteDocuments
+    }
+    return filterDocuments(documents || [], debouncedQuery)
+  }, [remoteDocuments, documents, debouncedQuery])
+
+  // Handle click outside and Escape key
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -104,6 +158,7 @@ export function SearchBar({ documents, defaultOpen = false }: SearchBarProps) {
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
+        setSearch('')
         setIsOpen(false)
       }
     }
@@ -116,70 +171,33 @@ export function SearchBar({ documents, defaultOpen = false }: SearchBarProps) {
     }
   }, [])
 
-  function handleSearch(newQuery: string) {
-    setSearch(newQuery)
-    const params = new URLSearchParams(searchParams.toString())
-
-    if (!newQuery.trim()) {
-      params.delete('q')
-    } else {
-      params.set('q', newQuery.trim())
-    }
-
-    params.delete('page')
-
-    startTransition(() => {
-      router.push(`/?${params.toString()}`)
-    })
-  }
-
-  // Combine real database documents with the demo collection from mockup
-  const allItems = useMemo(() => {
-    const realItems: SearchItem[] = (documents || []).map((doc) => ({
-      id: doc.id,
-      title: doc.title,
-      subsection: 'The Flanagans',
-      badgeColor: '#4CA4B7',
-      url: `/documents/${doc.id}`,
-    }))
-
-    const existingTitles = new Set(realItems.map((d) => d.title.toLowerCase()))
-    const remainingDefaults = DEFAULT_DOCUMENTS.filter(
-      (d) => !existingTitles.has(d.title.toLowerCase())
-    )
-
-    return [...realItems, ...remainingDefaults]
-  }, [documents])
-
-  // Filter items matching title or sub-section
-  const filteredItems = useMemo(() => {
-    if (!search.trim()) return allItems
-    const q = search.toLowerCase().trim()
-    return allItems.filter(
-      (item) =>
-        item.title.toLowerCase().includes(q) || item.subsection.toLowerCase().includes(q)
-    )
-  }, [allItems, search])
-
-  // Match sub-sections directly when typing
-  const matchingSubsections = useMemo(() => {
-    if (!search.trim()) return []
-    const q = search.toLowerCase().trim()
-    return SUBSECTIONS.filter((s) => s.name.toLowerCase().includes(q))
-  }, [search])
-
-  function handleSelectItem(item: SearchItem) {
-    if (item.url) {
-      router.push(item.url)
-    } else {
-      handleSearch(item.title)
-    }
+  function handleSelectDocument(doc: SearchDocument) {
+    const href = doc.status === 'draft' ? `/send/${doc.id}/place` : `/documents/${doc.id}`
+    router.push(href)
     setIsOpen(false)
   }
 
-  function handleSelectSubsection(subName: string) {
-    handleSearch(subName)
-    setIsOpen(false)
+  function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      setSearch('')
+      setIsOpen(false)
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      const targetItems =
+        displayedItems.length > 0
+          ? displayedItems
+          : filterDocuments(documents || [], search)
+      if (targetItems.length > 0) {
+        const topDoc = targetItems[0]
+        const href =
+          topDoc.status === 'draft'
+            ? `/send/${topDoc.id}/place`
+            : `/documents/${topDoc.id}`
+        router.push(href)
+        setIsOpen(false)
+      }
+    }
   }
 
   const dropdownBoxShadow =
@@ -214,9 +232,10 @@ export function SearchBar({ documents, defaultOpen = false }: SearchBarProps) {
           type="text"
           value={search}
           onChange={(e) => {
-            handleSearch(e.target.value)
+            setSearch(e.target.value)
             if (!isOpen) setIsOpen(true)
           }}
+          onKeyDown={handleInputKeyDown}
           onFocus={() => {
             setIsFocused(true)
             setIsOpen(true)
@@ -230,7 +249,7 @@ export function SearchBar({ documents, defaultOpen = false }: SearchBarProps) {
             type="button"
             onClick={(e) => {
               e.stopPropagation()
-              handleSearch('')
+              setSearch('')
             }}
             className="text-[#5F6269] hover:text-foreground transition-colors p-0.5"
             title="Clear search"
@@ -261,103 +280,69 @@ export function SearchBar({ documents, defaultOpen = false }: SearchBarProps) {
               WebkitBackdropFilter: 'saturate(1.5) blur(32px)',
             }}
           >
-            {/* Sub-sections Group (when typing matches sub-sections) */}
-            {matchingSubsections.length > 0 && (
-              <div className="mb-2">
-                <div className="text-[13px] font-medium text-[#8F94A0] px-2.5 pb-1.5 pt-1">
-                  Sub-sections
-                </div>
-                <div className="space-y-0.5">
-                  {matchingSubsections.map((sub) => (
-                    <div
-                      key={sub.name}
-                      onClick={() => handleSelectSubsection(sub.name)}
-                      className="flex items-center justify-between px-2.5 py-2 rounded-[12px] hover:bg-black/[0.04] transition-colors cursor-pointer group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-5 h-5 rounded-[5px] flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0"
-                          style={{ backgroundColor: sub.badgeColor }}
-                        >
-                          {sub.badgeText || (
-                            <span className="w-2 h-2 rounded-full bg-white/70" />
-                          )}
-                        </div>
-                        <span className="text-[14px] font-medium text-[#121417]">
-                          {sub.name}
-                        </span>
-                      </div>
-                      <span className="text-[12px] text-muted-foreground font-normal">
-                        Filter by section
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Documents Section Header */}
+            {/* Header */}
             <div className="text-[13px] font-medium text-[#8F94A0] px-2.5 pb-1.5 pt-1">
-              Documents
+              {debouncedQuery.trim() ? 'Documents' : 'Recent documents'}
             </div>
 
-            {/* Documents List */}
-            {filteredItems.length === 0 ? (
-              <div className="px-3 py-6 text-center text-xs text-muted-foreground">
-                No matching documents or sub-sections found.
+            {/* Document Results or Empty State */}
+            {displayedItems.length === 0 ? (
+              <div
+                data-testid="search-empty-state"
+                className="px-3 py-6 text-center text-xs text-[#8A8F98]"
+              >
+                {debouncedQuery.trim()
+                  ? `No documents match "${debouncedQuery}"`
+                  : 'No recent documents'}
               </div>
             ) : (
-              <div className="space-y-0.5">
-                {filteredItems.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => handleSelectItem(item)}
-                    className="flex items-center gap-3.5 px-2.5 py-1.5 rounded-[12px] hover:bg-black/[0.04] transition-colors cursor-pointer group"
-                  >
-                    {/* Miniature Document Thumbnail Icon */}
-                    <div className="relative shrink-0 w-[24px] h-[32px] bg-white rounded-[3px] border border-black/[0.1] shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col justify-start p-[3px] overflow-visible">
-                      {item.hasImageBanner ? (
-                        <>
-                          <div className="w-full h-[7px] bg-[#93C5FD]/30 rounded-[1px] mb-1 flex items-center justify-center">
-                            <div className="w-2 h-1 bg-[#60A5FA]/40 rounded-full" />
-                          </div>
-                          <div className="w-[12px] h-[1.5px] bg-zinc-300 rounded-full mb-0.5" />
-                          <div className="w-[8px] h-[1.5px] bg-zinc-200 rounded-full" />
-                        </>
-                      ) : (
-                        <>
-                          <div className="w-[10px] h-[1.5px] bg-zinc-400 rounded-full mb-1" />
-                          <div className="w-[14px] h-[1.2px] bg-zinc-200 rounded-full mb-0.5" />
-                          <div className="w-[12px] h-[1.2px] bg-zinc-200 rounded-full mb-0.5" />
-                          <div className="w-[14px] h-[1.2px] bg-zinc-200 rounded-full mb-0.5" />
-                          <div className="w-[8px] h-[1.2px] bg-zinc-200 rounded-full" />
-                        </>
+              <div className="space-y-0.5" data-testid="search-results-list">
+                {displayedItems.map((item) => {
+                  const recipient = getRecipientSubtitle(item)
+                  const badge = item.status
+                    ? getStatusBadgeInfo(item.status as DocumentStatus)
+                    : null
+
+                  return (
+                    <div
+                      key={item.id}
+                      data-testid={`search-result-item-${item.id}`}
+                      onClick={() => handleSelectDocument(item)}
+                      className="flex items-center gap-3.5 px-2.5 py-1.5 rounded-[12px] hover:bg-black/[0.04] transition-colors cursor-pointer group"
+                    >
+                      {/* Miniature Document Thumbnail Icon */}
+                      <div className="relative shrink-0 w-[24px] h-[32px] bg-white rounded-[3px] border border-black/[0.1] shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col justify-start p-[3px] overflow-visible">
+                        <div className="w-[10px] h-[1.5px] bg-zinc-400 rounded-full mb-1" />
+                        <div className="w-[14px] h-[1.2px] bg-zinc-200 rounded-full mb-0.5" />
+                        <div className="w-[12px] h-[1.2px] bg-zinc-200 rounded-full mb-0.5" />
+                        <div className="w-[14px] h-[1.2px] bg-zinc-200 rounded-full mb-0.5" />
+                        <div className="w-[8px] h-[1.2px] bg-zinc-200 rounded-full" />
+                      </div>
+
+                      {/* Title & Recipient Subtitle */}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[14px] font-medium text-[#121417] truncate leading-tight">
+                          {item.title || 'Untitled Document'}
+                        </div>
+                        <div className="text-[12px] text-[#6B7280] truncate leading-tight mt-0.5">
+                          {recipient}
+                        </div>
+                      </div>
+
+                      {/* Status Badge */}
+                      {badge && (
+                        <span
+                          className={cn(
+                            'text-[11px] px-2 py-0.5 rounded-full border font-medium shrink-0',
+                            badge.color
+                          )}
+                        >
+                          {badge.label}
+                        </span>
                       )}
-
-                      {/* Sub-section Corner Badge */}
-                      <div
-                        className="absolute -bottom-1 -right-1 w-3 h-3 rounded-[2.5px] flex items-center justify-center text-[7px] font-bold text-white shadow-sm overflow-hidden"
-                        style={{ backgroundColor: item.badgeColor }}
-                      >
-                        {item.badgeText ? (
-                          item.badgeText
-                        ) : (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
-                        )}
-                      </div>
                     </div>
-
-                    {/* Title & Sub-section */}
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[14px] font-medium text-[#121417] truncate leading-tight">
-                        {item.title}
-                      </div>
-                      <div className="text-[12px] text-[#6B7280] truncate leading-tight mt-0.5">
-                        In {item.subsection}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

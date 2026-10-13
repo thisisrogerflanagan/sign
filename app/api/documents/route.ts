@@ -186,3 +186,75 @@ export async function POST(req: Request) {
     )
   }
 }
+
+export async function GET(req: Request) {
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const url = new URL(req.url)
+    const q = url.searchParams.get('q')?.trim() || ''
+
+    const query = supabase
+      .from('documents')
+      .select(
+        `
+        id,
+        title,
+        status,
+        page_count,
+        created_at,
+        updated_at,
+        signers (
+          id,
+          name,
+          email
+        )
+      `
+      )
+      .eq('owner_id', user.id)
+      .neq('status', 'deleted')
+      .order('updated_at', { ascending: false })
+
+    const { data: documents, error } = await query
+
+    if (error) {
+      console.error('Failed to query documents:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    let results = documents || []
+
+    if (q) {
+      const lowerQ = q.toLowerCase()
+      results = results.filter((doc: any) => {
+        const titleMatch = Boolean(doc.title && doc.title.toLowerCase().includes(lowerQ))
+        const signersList = Array.isArray(doc.signers)
+          ? doc.signers
+          : doc.signers
+            ? [doc.signers]
+            : []
+        const recipientMatch = signersList.some((s: any) => {
+          const nameMatch = Boolean(s.name && s.name.toLowerCase().includes(lowerQ))
+          const emailMatch = Boolean(s.email && s.email.toLowerCase().includes(lowerQ))
+          return nameMatch || emailMatch
+        })
+        return titleMatch || recipientMatch
+      })
+    }
+
+    return NextResponse.json({ documents: results })
+  } catch (error: any) {
+    console.error('Unexpected error during documents query:', error)
+    return NextResponse.json(
+      { error: error.message || 'An unexpected error occurred.' },
+      { status: 500 }
+    )
+  }
+}

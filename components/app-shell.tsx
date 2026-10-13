@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Settings, CircleHelp, Megaphone, LogOut, Info } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/components/ui/use-toast'
-import { SearchBar } from '@/components/documents/search-bar'
+import { SearchBar, SearchDocument } from '@/components/documents/search-bar'
 import { NotificationPopup } from '@/components/notifications/notification-popup'
 
 export function getUserInitials(name?: string, email?: string): string {
@@ -276,11 +276,7 @@ export function ProfileMenuPanel({
 export interface AppShellProps {
   sidebar: React.ReactNode
   children?: React.ReactNode
-  documents?: Array<{
-    id: string
-    title: string
-    status?: string
-  }>
+  documents?: SearchDocument[]
   userName?: string
   userEmail?: string
   userAvatar?: string | null

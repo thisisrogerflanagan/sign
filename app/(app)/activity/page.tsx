@@ -73,10 +73,23 @@ export default async function ActivityPage(props: ActivityPageProps) {
   // 2. Query documents owned by user to populate search bar & filter audit events
   const { data: allDocs } = await supabase
     .from('documents')
-    .select('id, title, status')
+    .select(
+      `
+      id,
+      title,
+      status,
+      page_count,
+      created_at,
+      updated_at,
+      signers (
+        name,
+        email
+      )
+    `
+    )
     .eq('owner_id', user.id)
     .neq('status', 'deleted')
-    .order('created_at', { ascending: false })
+    .order('updated_at', { ascending: false })
 
   const userDocIds = (allDocs || []).map((d) => d.id)
   const docMap = new Map((allDocs || []).map((d) => [d.id, d]))

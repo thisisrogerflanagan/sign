@@ -123,6 +123,27 @@ export default async function HomePage(props: HomePageProps) {
 
   const { data: documents, count: totalCount, error } = await docQuery
 
+  // Query all non-deleted documents with signers for the header search bar
+  const { data: allDocs } = await supabase
+    .from('documents')
+    .select(
+      `
+      id,
+      title,
+      status,
+      page_count,
+      created_at,
+      updated_at,
+      signers (
+        name,
+        email
+      )
+    `
+    )
+    .eq('owner_id', user.id)
+    .neq('status', 'deleted')
+    .order('updated_at', { ascending: false })
+
   function getSortUrl(column: string) {
     const isCurrent = currentSort === column
     const nextOrder = isCurrent && currentOrder === 'desc' ? 'asc' : 'desc'
@@ -136,7 +157,7 @@ export default async function HomePage(props: HomePageProps) {
 
   return (
     <AppShell
-      documents={documents || []}
+      documents={allDocs || documents || []}
       userName={userName}
       userEmail={user.email}
       requestsSent={requestsSent}
