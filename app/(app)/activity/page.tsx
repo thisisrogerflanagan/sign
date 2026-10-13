@@ -55,13 +55,41 @@ export default async function ActivityPage(props: ActivityPageProps) {
 
   const requestsSent = usageRow?.requests_sent || 0
 
+  // Fetch user profile for display name
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .single()
+
+  const userName =
+    userProfile?.display_name ||
+    user.user_metadata?.display_name ||
+    user.user_metadata?.full_name ||
+    user.user_metadata?.name ||
+    user.email?.split('@')[0] ||
+    'Joe Banks'
+
   // 2. Query documents owned by user to populate search bar & filter audit events
   const { data: allDocs } = await supabase
     .from('documents')
-    .select('id, title, status')
+    .select(
+      `
+      id,
+      title,
+      status,
+      page_count,
+      created_at,
+      updated_at,
+      signers (
+        name,
+        email
+      )
+    `
+    )
     .eq('owner_id', user.id)
     .neq('status', 'deleted')
-    .order('created_at', { ascending: false })
+    .order('updated_at', { ascending: false })
 
   const userDocIds = (allDocs || []).map((d) => d.id)
   const docMap = new Map((allDocs || []).map((d) => [d.id, d]))
@@ -163,16 +191,12 @@ export default async function ActivityPage(props: ActivityPageProps) {
   return (
     <AppShell
       documents={allDocs || []}
-      userName={
-        user.user_metadata?.display_name || user.email?.split('@')[0] || 'Joe Banks'
-      }
+      userName={userName}
       userEmail={user.email}
       requestsSent={requestsSent}
       sidebar={
         <AppSidebar
-          userName={
-            user.user_metadata?.display_name || user.email?.split('@')[0] || 'Joe Banks'
-          }
+          userName={userName}
           userEmail={user.email}
           requestsSent={requestsSent}
         />
@@ -193,7 +217,7 @@ export default async function ActivityPage(props: ActivityPageProps) {
             {format(new Date(), 'EEEE, MMMM d')}
           </div>
 
-          <div className="flex items-center justify-between gap-4 overflow-x-auto pb-1">
+          <div className="flex items-center justify-between gap-4 overflow-visible">
             <div className="flex items-center gap-3 shrink-0">
               <h1
                 className="font-medium tracking-tight text-[#121417] whitespace-nowrap"

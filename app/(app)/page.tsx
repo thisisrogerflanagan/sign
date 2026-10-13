@@ -3,10 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { DocumentRowActions } from '@/components/documents/document-row-actions'
-import {
-  DocumentThumbnail,
-  THUMBNAIL_CARD_STYLE,
-} from '@/components/documents/document-thumbnail'
+import { DocumentThumbnail } from '@/components/documents/document-thumbnail'
 import { HomeFeedFilters } from '@/components/documents/home-feed-filters'
 import { AppShell } from '@/components/app-shell'
 import { AppSidebar } from '@/components/app-sidebar'
@@ -58,7 +55,22 @@ export default async function HomePage(props: HomePageProps) {
 
   const requestsSent = usageRow?.requests_sent || 0
 
-  // 2. Query documents based on search, filter, and sorting
+  // 2. Fetch user profile for display name
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .single()
+
+  const userName =
+    userProfile?.display_name ||
+    user.user_metadata?.display_name ||
+    user.user_metadata?.full_name ||
+    user.user_metadata?.name ||
+    user.email?.split('@')[0] ||
+    'Joe Banks'
+
+  // 3. Query documents based on search, filter, and sorting
   const filterStatus = searchParams.status
   const searchQuery = searchParams.q
   const page = parseInt(searchParams.page || '1', 10)
@@ -111,6 +123,27 @@ export default async function HomePage(props: HomePageProps) {
 
   const { data: documents, count: totalCount, error } = await docQuery
 
+  // Query all non-deleted documents with signers for the header search bar
+  const { data: allDocs } = await supabase
+    .from('documents')
+    .select(
+      `
+      id,
+      title,
+      status,
+      page_count,
+      created_at,
+      updated_at,
+      signers (
+        name,
+        email
+      )
+    `
+    )
+    .eq('owner_id', user.id)
+    .neq('status', 'deleted')
+    .order('updated_at', { ascending: false })
+
   function getSortUrl(column: string) {
     const isCurrent = currentSort === column
     const nextOrder = isCurrent && currentOrder === 'desc' ? 'asc' : 'desc'
@@ -124,26 +157,19 @@ export default async function HomePage(props: HomePageProps) {
 
   return (
     <AppShell
-      documents={documents || []}
-      userName={
-        user.user_metadata?.display_name || user.email?.split('@')[0] || 'Joe Banks'
-      }
+      documents={allDocs || documents || []}
+      userName={userName}
       userEmail={user.email}
       requestsSent={requestsSent}
       sidebar={
         <AppSidebar
-          userName={
-            user.user_metadata?.display_name || user.email?.split('@')[0] || 'Joe Banks'
-          }
+          userName={userName}
           userEmail={user.email}
           requestsSent={requestsSent}
         />
       }
     >
-      <main
-        style={THUMBNAIL_CARD_STYLE}
-        className="w-full max-w-6xl mx-auto bg-white rounded-2xl sm:rounded-3xl border border-black/[0.04] p-6 sm:p-8 shadow-sm space-y-6"
-      >
+      <main className="w-full max-w-6xl mx-auto space-y-6">
         {/* Main Content View Heading */}
         <div className="space-y-3">
           <div
@@ -157,7 +183,7 @@ export default async function HomePage(props: HomePageProps) {
           >
             {format(new Date(), 'EEEE, MMMM d')}
           </div>
-          <div className="flex items-center justify-between gap-4 overflow-x-auto pb-1">
+          <div className="flex items-center justify-between gap-4 overflow-visible">
             <div className="flex items-center gap-3.5 shrink-0">
               <SquircleButton href="/send" title="New document">
                 <img

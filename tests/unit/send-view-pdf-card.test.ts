@@ -249,7 +249,7 @@ describe('Issue #28: Send doc view PDF card, pager header, and field placeholder
       )
 
       // Main element is non-scrolling to keep header pinned
-      expect(html).toContain('overflow-hidden flex flex-col')
+      expect(html).toContain('overflow-visible flex flex-col')
 
       // White background card has fixed flex-1 min-h-0 with vertical scrollbar
       expect(html).toContain('pdf-page-card w-full flex-1 min-h-0')

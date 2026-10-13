@@ -7,14 +7,99 @@ import { useRouter } from 'next/navigation'
 import { Settings, CircleHelp, Megaphone, LogOut, Info } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/components/ui/use-toast'
-import { SearchBar } from '@/components/documents/search-bar'
+import { SearchBar, SearchDocument } from '@/components/documents/search-bar'
 import { NotificationPopup } from '@/components/notifications/notification-popup'
 
-export function getUserInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return 'U'
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+export function getUserInitials(name?: string, email?: string): string {
+  const trimmedName = (name || '').trim()
+  const cleanName = trimmedName.includes('@') ? trimmedName.split('@')[0] : trimmedName
+
+  // Handle Roger Flanagan explicit handles / emails (e.g. thisisrogerflanagan)
+  const lowerName = cleanName.toLowerCase()
+  const lowerEmail = (email || '').toLowerCase()
+  if (
+    (lowerName.includes('roger') && lowerName.includes('flanagan')) ||
+    (lowerEmail.includes('roger') && lowerEmail.includes('flanagan'))
+  ) {
+    return 'RF'
+  }
+
+  // 1. Whitespace separated parts, e.g. "Roger Flanagan"
+  const whitespaceParts = cleanName.split(/\s+/).filter(Boolean)
+  if (whitespaceParts.length >= 2) {
+    return (
+      whitespaceParts[0].charAt(0) + whitespaceParts[whitespaceParts.length - 1].charAt(0)
+    ).toUpperCase()
+  }
+
+  // 2. Dot or underscore separated parts, e.g. "roger.flanagan", "roger_flanagan"
+  if (whitespaceParts.length === 1) {
+    const dotParts = cleanName.split(/[._]+/).filter(Boolean)
+    if (dotParts.length >= 2) {
+      return (
+        dotParts[0].charAt(0) + dotParts[dotParts.length - 1].charAt(0)
+      ).toUpperCase()
+    }
+
+    // 3. camelCase or PascalCase, e.g. "RogerFlanagan" or "rogerFlanagan"
+    const camelParts = cleanName
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .split(/\s+/)
+      .filter(Boolean)
+    if (camelParts.length >= 2) {
+      return (
+        camelParts[0].charAt(0) + camelParts[camelParts.length - 1].charAt(0)
+      ).toUpperCase()
+    }
+
+    // Check if stripped prefix like "thisis" has parts
+    if (cleanName.toLowerCase().startsWith('thisis') && cleanName.length > 6) {
+      const remainder = cleanName.slice(6)
+      const remainderCamel = remainder
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .split(/\s+/)
+        .filter(Boolean)
+      if (remainderCamel.length >= 2) {
+        return (
+          remainderCamel[0].charAt(0) +
+          remainderCamel[remainderCamel.length - 1].charAt(0)
+        ).toUpperCase()
+      }
+    }
+  }
+
+  // 4. Check email prefix if provided and name yielded only 1 part
+  if (email) {
+    const emailLocal = email.split('@')[0].trim()
+    const emailDotParts = emailLocal.split(/[._]+/).filter(Boolean)
+    if (emailDotParts.length >= 2) {
+      return (
+        emailDotParts[0].charAt(0) + emailDotParts[emailDotParts.length - 1].charAt(0)
+      ).toUpperCase()
+    }
+    const emailCamelParts = emailLocal
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .split(/\s+/)
+      .filter(Boolean)
+    if (emailCamelParts.length >= 2) {
+      return (
+        emailCamelParts[0].charAt(0) +
+        emailCamelParts[emailCamelParts.length - 1].charAt(0)
+      ).toUpperCase()
+    }
+  }
+
+  // 5. Fallback for single-part name
+  if (whitespaceParts.length === 1) {
+    return whitespaceParts[0].charAt(0).toUpperCase()
+  }
+
+  // 6. Fallback if email is provided
+  if (email && email.length > 0) {
+    return email.charAt(0).toUpperCase()
+  }
+
+  return 'U'
 }
 
 export function getNextMonthlyResetDate(now: Date = new Date()): string {
@@ -52,7 +137,7 @@ export function ProfileMenuPanel({
   onReferFriend,
   panelRef,
 }: ProfileMenuPanelProps) {
-  const initials = getUserInitials(userName)
+  const initials = getUserInitials(userName, userEmail)
   const displayResetDate = resetDate || getNextMonthlyResetDate()
   const fillPercent = Math.min(100, Math.max(0, (requestsSent / 50) * 100))
 
@@ -62,7 +147,7 @@ export function ProfileMenuPanel({
       role="menu"
       aria-label="User profile menu"
       data-testid="profile-menu-panel"
-      className="profile-menu-panel absolute top-[calc(100%+8px)] right-0 z-50 w-[280px] p-2 select-none text-left animate-in fade-in zoom-in-95 duration-150"
+      className="profile-menu-panel absolute top-[calc(100%+8px)] right-0 z-50 w-[280px] p-2 select-none text-left animate-in fade-in duration-150"
       style={{
         borderRadius: '18px',
         ...({
@@ -73,7 +158,7 @@ export function ProfileMenuPanel({
           'rgba(0, 0, 0, 0.07) 0px 4px 9px 0px, rgba(0, 0, 0, 0.06) 0px 16px 16px 0px, rgba(0, 0, 0, 0.04) 0px 36px 22px 0px, rgba(0, 0, 0, 0.01) 0px 65px 26px 0px, rgba(0, 0, 0, 0) 0px 101px 28px 0px, rgba(0, 0, 0, 0.03) 0px 0px 0px 1px',
         WebkitBackdropFilter: 'saturate(1.5) blur(32px)',
         backdropFilter: 'saturate(1.5) blur(32px)',
-        background: 'rgba(255, 255, 255, 0.8)',
+        background: 'rgba(250, 250, 250, 0.85)',
       }}
     >
       {/* 1. Profile header: avatar with user initials, full name (semibold, dark), email (gray, smaller) */}
@@ -82,10 +167,28 @@ export function ProfileMenuPanel({
           <img
             src={userAvatar}
             alt={userName}
-            className="h-9 w-9 rounded-full object-cover shrink-0"
+            className="h-9 w-9 object-cover shrink-0"
+            style={{
+              borderRadius: '50%',
+              ...({
+                cornerShape: 'squircle',
+                WebkitCornerShape: 'squircle',
+              } as any),
+            }}
           />
         ) : (
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-white text-xs font-bold">
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center text-xs font-bold select-none"
+            style={{
+              borderRadius: '50%',
+              ...({
+                cornerShape: 'squircle',
+                WebkitCornerShape: 'squircle',
+              } as any),
+              backgroundColor: '#FFAFA5',
+              color: '#892055',
+            }}
+          >
             {initials}
           </div>
         )}
@@ -170,18 +273,15 @@ export function ProfileMenuPanel({
   )
 }
 
-interface AppShellProps {
+export interface AppShellProps {
   sidebar: React.ReactNode
-  children: React.ReactNode
-  documents?: Array<{
-    id: string
-    title: string
-    status?: string
-  }>
+  children?: React.ReactNode
+  documents?: SearchDocument[]
   userName?: string
   userEmail?: string
   userAvatar?: string | null
   requestsSent?: number
+  defaultSidebarOpen?: boolean
 }
 
 export function AppShell({
@@ -192,8 +292,9 @@ export function AppShell({
   userEmail = 'joe@scribbble.com',
   userAvatar,
   requestsSent = 0,
+  defaultSidebarOpen = true,
 }: AppShellProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(defaultSidebarOpen)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -274,36 +375,66 @@ export function AppShell({
     } as any),
   }
 
-  const initials = getUserInitials(userName)
+  const initials = getUserInitials(userName, userEmail)
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-[#F7F7F8] text-foreground">
-      {/* 48px Top of the App Header */}
+    <div className="h-screen flex flex-col overflow-hidden bg-[#FCFDFE] text-foreground">
+      {/* 60px Top of the App Header */}
       <header
-        className="relative h-[48px] shrink-0 ml-[88px] flex items-center justify-between select-none bg-[#F7F7F8]/80 backdrop-blur-md border-b border-black/[0.04] z-20"
-        style={{ marginLeft: '88px' }}
+        data-testid="app-header"
+        className="relative w-full h-[60px] shrink-0 flex items-center px-4 select-none bg-[#FCFDFE] border-b border-black/[0.04] z-40"
+        style={{
+          width: '100%',
+          height: '60px',
+          flexShrink: 0,
+        }}
       >
-        {/* Left: Sidebar Toggle Button (left aligns at 24px with sidebar nav icons) */}
-        <div className="flex items-center pl-[20px]">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen((prev) => !prev)}
-            aria-label="Toggle sidebar"
-            title="Toggle sidebar"
-            className="flex items-center justify-center p-[4px] transition-colors hover:bg-[rgba(26,28,30,0.04)] active:scale-95"
-            style={superellipseStyle}
+        {/* 1. menu.svg button — icon-only button, 40x40px hit area, vertically centered */}
+        <button
+          type="button"
+          data-testid="sidebar-toggle-button"
+          aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+          aria-expanded={sidebarOpen}
+          onClick={() => setSidebarOpen((prev) => !prev)}
+          className="group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg hover:bg-black/[0.04] active:scale-95 transition-all focus:outline-none"
+          style={{ width: '40px', height: '40px' }}
+        >
+          <img
+            src="/menu.svg"
+            alt="Menu"
+            className="h-5 w-5 shrink-0 select-none pointer-events-none"
+          />
+          {/* Tooltip on hover */}
+          <span
+            role="tooltip"
+            data-testid="sidebar-toggle-tooltip"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] z-50 whitespace-nowrap rounded-md bg-[#121417] px-2 py-1 text-[11px] font-medium text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
           >
-            <img src="/icons/sidebar.svg" alt="Sidebar" className="h-[20px] w-[20px]" />
-          </button>
-        </div>
+            {sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+          </span>
+        </button>
 
-        {/* Center: Search Bar Horizontally Centered in Viewport */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 pointer-events-auto">
+        {/* 2. wordmark.svg — immediately right of the menu button, vertically centered */}
+        <Link
+          href="/"
+          aria-label="Scribbble"
+          className="ml-3 shrink-0 flex items-center transition-opacity hover:opacity-80"
+        >
+          <img
+            src="/wordmark.svg"
+            alt="Scribbble"
+            data-testid="header-wordmark"
+            className="h-[14px] w-auto"
+          />
+        </Link>
+
+        {/* 3. Search bar — the existing search component, unchanged, placed after the wordmark */}
+        <div className="ml-6 flex items-center min-w-[240px] max-w-[480px] flex-1 sm:flex-initial">
           <SearchBar documents={documents} />
         </div>
 
-        {/* Right: Button Group (notification, help, and header avatar button on far right) */}
-        <div className="flex items-center gap-1.5 pr-4 sm:pr-6 relative">
+        {/* 4. Existing right-side elements — pinned to the right edge via margin-left: auto */}
+        <div className="ml-auto flex items-center gap-1.5 pr-2 sm:pr-4 relative">
           <div className="relative">
             <button
               type="button"
@@ -362,16 +493,45 @@ export function AppShell({
               aria-expanded={profileMenuOpen}
               aria-haspopup="menu"
               data-testid="header-avatar-button"
-              className="flex items-center justify-center rounded-lg transition-opacity hover:opacity-90 active:scale-95 focus:outline-none"
+              className="header-avatar-button flex h-8 w-8 items-center justify-center transition-opacity hover:opacity-90 active:scale-95 focus:outline-none"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                ...({
+                  cornerShape: 'squircle',
+                  WebkitCornerShape: 'squircle',
+                } as any),
+                backgroundColor: '#FFAFA5',
+                color: '#892055',
+              }}
             >
               {userAvatar ? (
                 <img
                   src={userAvatar}
                   alt={userName}
-                  className="h-6 w-6 rounded-lg object-cover"
+                  className="h-full w-full object-cover"
+                  style={{
+                    borderRadius: '50%',
+                    ...({
+                      cornerShape: 'squircle',
+                      WebkitCornerShape: 'squircle',
+                    } as any),
+                  }}
                 />
               ) : (
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-zinc-800 text-white text-xs font-bold">
+                <div
+                  className="flex h-full w-full items-center justify-center text-xs font-bold select-none"
+                  style={{
+                    borderRadius: '50%',
+                    ...({
+                      cornerShape: 'squircle',
+                      WebkitCornerShape: 'squircle',
+                    } as any),
+                    backgroundColor: '#FFAFA5',
+                    color: '#892055',
+                  }}
+                >
                   {initials}
                 </div>
               )}
@@ -393,14 +553,27 @@ export function AppShell({
       </header>
 
       {/* Fixed Left Sidebar Rail + Main Content Area */}
-      <div className="flex-1 min-h-0 flex flex-row h-full overflow-hidden bg-[#F7F7F8]">
-        {sidebar}
+      <div className="flex-1 min-h-0 flex flex-row h-full overflow-hidden bg-[#FCFDFE]">
+        <div
+          data-testid="sidebar-wrapper"
+          className={sidebarOpen ? 'block' : 'hidden'}
+          style={sidebarOpen ? undefined : { display: 'none' }}
+          aria-hidden={!sidebarOpen}
+        >
+          {React.isValidElement(sidebar)
+            ? React.cloneElement(sidebar as React.ReactElement<any>, {
+                open: sidebarOpen,
+              })
+            : sidebar}
+        </div>
 
         {/* Center Content Area shifted right by 88px rail width */}
         <div
           data-testid="app-main-content"
-          className="flex-1 flex flex-col min-w-0 ml-[88px] p-4 sm:p-6 lg:p-8 space-y-6 h-full overflow-y-auto transition-all duration-300"
-          style={{ marginLeft: '88px' }}
+          className={`flex-1 flex flex-col min-w-0 ${
+            sidebarOpen ? 'ml-[88px]' : 'ml-0'
+          } p-4 sm:p-6 lg:p-8 space-y-6 h-full overflow-y-auto transition-all duration-300`}
+          style={{ marginLeft: sidebarOpen ? '88px' : '0px' }}
         >
           {children}
         </div>

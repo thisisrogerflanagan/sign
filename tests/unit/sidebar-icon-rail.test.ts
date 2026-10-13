@@ -45,9 +45,11 @@ describe('Issue #27: Left sidebar slim icon rail (Dropbox layout)', () => {
     expect(html).toContain('padding-top:20px')
     expect(html).toContain('padding-bottom:20px')
 
-    // Top-centered 32px logo mark
+    // Top-centered 32px logo mark with logo.svg
     expect(html).toContain('data-testid="sidebar-logo"')
     expect(html).toContain('width:32px;height:32px')
+    expect(html).toContain('src="/logo.svg"')
+    expect(html).not.toMatch(/>\s*S\s*</)
   })
 
   it('preserves all 4 primary nav items with exact labels, order, and destinations, stacked with 24px gap', () => {
@@ -115,11 +117,14 @@ describe('Issue #27: Left sidebar slim icon rail (Dropbox layout)', () => {
 
   it('shifts main content area right by 88px (margin-left: 88px) and hides nav labels below 768px', () => {
     const shellHtml = renderToString(
-      React.createElement(AppShell, {
-        sidebar: React.createElement(AppSidebar, {}),
-        documents: [],
-        children: React.createElement('div', null, 'Main Content'),
-      })
+      React.createElement(
+        AppShell,
+        {
+          sidebar: React.createElement(AppSidebar, {}),
+          documents: [],
+        },
+        React.createElement('div', null, 'Main Content')
+      )
     )
 
     expect(shellHtml).toContain('data-testid="app-main-content"')
@@ -133,5 +138,28 @@ describe('Issue #27: Left sidebar slim icon rail (Dropbox layout)', () => {
       'utf8'
     )
     expect(globalsCss).toContain('.sidebar-rail-label')
+  })
+
+  it('All Docs feed content sits directly on the body background without a white card wrapper', () => {
+    const pageCode = fs.readFileSync(
+      path.join(process.cwd(), 'app/(app)/page.tsx'),
+      'utf8'
+    )
+    expect(pageCode).toContain('<main className="w-full max-w-6xl mx-auto space-y-6">')
+    expect(pageCode).not.toContain('style={THUMBNAIL_CARD_STYLE}')
+    expect(pageCode).not.toMatch(/<main[^>]*bg-white/)
+  })
+
+  it('sets body background-color to rgb(252, 253, 254) in globals.css and layout', () => {
+    const globalsCss = fs.readFileSync(
+      path.join(process.cwd(), 'app/globals.css'),
+      'utf8'
+    )
+    expect(globalsCss).toMatch(
+      /body\s*\{[\s\S]*background-color:\s*rgb\(252,\s*253,\s*254\);/
+    )
+
+    const layoutCode = fs.readFileSync(path.join(process.cwd(), 'app/layout.tsx'), 'utf8')
+    expect(layoutCode).toContain('bg-[#FCFDFE]')
   })
 })

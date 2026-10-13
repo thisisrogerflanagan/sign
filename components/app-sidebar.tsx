@@ -14,14 +14,15 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-interface AppSidebarProps {
+export interface AppSidebarProps {
   userName?: string
   userEmail?: string
   userAvatar?: string | null
   requestsSent?: number
+  open?: boolean
 }
 
-export function AppSidebar(_props: AppSidebarProps) {
+export function AppSidebar({ open = true, ..._props }: AppSidebarProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const status = searchParams?.get('status')
@@ -64,14 +65,18 @@ export function AppSidebar(_props: AppSidebarProps) {
   return (
     <aside
       data-testid="app-sidebar"
-      className="fixed top-0 left-0 z-30 w-[88px] h-screen bg-white border-r border-black/[0.04] shrink-0 flex flex-col items-center justify-between pt-[20px] pb-[20px] select-none"
+      className={`fixed top-0 left-0 z-30 w-[88px] h-screen bg-white border-r border-black/[0.04] shrink-0 flex flex-col items-center justify-between pt-[20px] pb-[20px] select-none transition-transform duration-200 ${
+        open ? 'translate-x-0' : '-translate-x-full hidden'
+      }`}
       style={{
         width: '88px',
         height: '100vh',
         backgroundColor: '#FFFFFF',
         paddingTop: '20px',
         paddingBottom: '20px',
+        ...(open ? {} : { display: 'none' }),
       }}
+      aria-hidden={!open}
     >
       {/* Top: Logo + Primary Nav */}
       <div className="flex flex-col items-center w-full">
@@ -80,10 +85,10 @@ export function AppSidebar(_props: AppSidebarProps) {
           href="/"
           aria-label="Scribbble"
           data-testid="sidebar-logo"
-          className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-lg bg-[#111111] text-white text-sm font-bold leading-none"
+          className="flex h-[32px] w-[32px] shrink-0 items-center justify-center transition-opacity hover:opacity-80"
           style={{ width: '32px', height: '32px' }}
         >
-          S
+          <img src="/logo.svg" alt="Scribbble" className="h-[28px] w-[28px]" />
         </Link>
 
         {/* Primary Nav Stack (first item 24px below logo, 24px vertical gap) */}

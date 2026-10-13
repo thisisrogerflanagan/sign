@@ -86,9 +86,9 @@ export default async function DocumentDetailPage(props: DocumentDetailPageProps)
   const badge = getStatusBadgeInfo(doc.status)
 
   return (
-    <div className="min-h-screen bg-[#F7F7F8] pb-24 text-foreground selection:bg-sky-100 selection:text-sky-900">
+    <div className="min-h-screen bg-[#FCFDFE] pb-24 text-foreground selection:bg-sky-100 selection:text-sky-900">
       {/* Craft Minimalist Top Navbar */}
-      <header className="border-b border-black/[0.04] bg-[#F7F7F8]/80 backdrop-blur-md sticky top-0 z-30 transition-all">
+      <header className="border-b border-black/[0.04] bg-[#FCFDFE]/80 backdrop-blur-md sticky top-0 z-30 transition-all">
         <div className="mx-auto flex h-14 max-w-[1600px] items-center justify-between px-4 sm:px-6">
           {/* Left: Back / Brand Toggle */}
           <div className="flex items-center gap-2">

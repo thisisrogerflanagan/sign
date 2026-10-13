@@ -753,9 +753,9 @@ export function SendFlowEditor({
   const pages = Array.from({ length: Math.max(1, numPages || 1) }, (_, i) => i + 1)
 
   return (
-    <div className="flex h-screen flex-col bg-[#F7F7F8] text-foreground">
+    <div className="flex h-screen flex-col bg-[#FCFDFE] text-foreground">
       {/* Top Navbar */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-black/[0.04] bg-[#F7F7F8]/80 backdrop-blur-md px-4 sm:px-6 z-20">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-black/[0.04] bg-[#FCFDFE]/80 backdrop-blur-md px-4 sm:px-6 z-20">
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost" size="sm" className="rounded-full">
             <Link href="/" className="text-muted-foreground hover:text-foreground">
@@ -812,7 +812,7 @@ export function SendFlowEditor({
       </header>
 
       {/* Main 3-Column Layout: Left Info Panel + Center Canvas + Right Field Palette */}
-      <div className="flex flex-1 overflow-hidden p-4 sm:p-6 gap-6 bg-[#F7F7F8]">
+      <div className="flex flex-1 min-h-0 overflow-visible p-4 sm:p-6 gap-6 bg-[#FCFDFE]">
         {/* LEFT SIDEBAR: Stand-Alone Info Panel with Tab Nav */}
         <InfoPanel
           documentTitle={docTitle}
@@ -840,7 +840,7 @@ export function SendFlowEditor({
         <main
           ref={containerRef}
           onClick={() => setActiveFieldId(null)}
-          className="flex-1 min-w-0 h-full overflow-hidden flex flex-col items-stretch justify-start relative"
+          className="flex-1 min-w-0 h-full overflow-visible flex flex-col items-stretch justify-start relative"
         >
           {step === 'upload' ? (
             <UploadArea
@@ -860,7 +860,7 @@ export function SendFlowEditor({
               error={uploadError}
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-stretch gap-3 pb-2">
+            <div className="w-full h-full flex flex-col items-stretch gap-3 pb-3">
               {/* Auto-detect suggestions bar */}
               {suggestionCount > 0 && (
                 <div className="shrink-0 w-full bg-amber-50 border border-amber-200/80 rounded-xl px-4 py-2.5 shadow-sm flex items-center justify-between gap-3 text-amber-900 text-xs animate-in fade-in slide-in-from-top-2">
