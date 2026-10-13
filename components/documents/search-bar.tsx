@@ -15,12 +15,13 @@ export interface SearchItem {
   url?: string
 }
 
-interface SearchBarProps {
+export interface SearchBarProps {
   documents?: Array<{
     id: string
     title: string
     status?: string
   }>
+  defaultOpen?: boolean
 }
 
 const DEFAULT_DOCUMENTS: SearchItem[] = [
@@ -77,14 +78,14 @@ const SUBSECTIONS = [
   { name: 'WhatsApp', badgeColor: '#25D366', badgeText: 'W', count: 1 },
 ]
 
-export function SearchBar({ documents }: SearchBarProps) {
+export function SearchBar({ documents, defaultOpen = false }: SearchBarProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [, startTransition] = useTransition()
 
   const currentQuery = searchParams.get('q') || ''
   const [search, setSearch] = useState(currentQuery)
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(defaultOpen)
   const [isFocused, setIsFocused] = useState(false)
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -156,8 +157,7 @@ export function SearchBar({ documents }: SearchBarProps) {
     const q = search.toLowerCase().trim()
     return allItems.filter(
       (item) =>
-        item.title.toLowerCase().includes(q) ||
-        item.subsection.toLowerCase().includes(q)
+        item.title.toLowerCase().includes(q) || item.subsection.toLowerCase().includes(q)
     )
   }, [allItems, search])
 
@@ -242,118 +242,125 @@ export function SearchBar({ documents }: SearchBarProps) {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div
-          className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 min-[900px]:left-0 min-[900px]:translate-x-0 z-50 overflow-y-auto flex flex-col p-3.5 select-none"
-          style={{
-            width: '480px',
-            maxWidth: 'calc(100vw - 32px)',
-            maxHeight: 'calc(100vh - calc(0px + 56px) - 16px)',
-            borderRadius: '18px',
-            boxShadow: dropdownBoxShadow,
-            background: 'rgba(250, 250, 250, 0.85)',
-            backdropFilter: 'saturate(1.5) blur(32px)',
-            WebkitBackdropFilter: 'saturate(1.5) blur(32px)',
-          }}
-        >
-          {/* Sub-sections Group (when typing matches sub-sections) */}
-          {matchingSubsections.length > 0 && (
-            <div className="mb-2">
-              <div className="text-[13px] font-medium text-[#8F94A0] px-2.5 pb-1.5 pt-1">
-                Sub-sections
-              </div>
-              <div className="space-y-0.5">
-                {matchingSubsections.map((sub) => (
-                  <div
-                    key={sub.name}
-                    onClick={() => handleSelectSubsection(sub.name)}
-                    className="flex items-center justify-between px-2.5 py-2 rounded-[12px] hover:bg-black/[0.04] transition-colors cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-5 h-5 rounded-[5px] flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0"
-                        style={{ backgroundColor: sub.badgeColor }}
-                      >
-                        {sub.badgeText || (
-                          <span className="w-2 h-2 rounded-full bg-white/70" />
-                        )}
+        <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 min-[900px]:left-0 min-[900px]:translate-x-0 z-50">
+          <div
+            data-testid="search-dropdown-menu"
+            className="search-dropdown-menu overflow-y-auto flex flex-col p-3.5 select-none"
+            style={{
+              width: '480px',
+              maxWidth: 'calc(100vw - 32px)',
+              maxHeight: 'calc(100vh - calc(0px + 56px) - 16px)',
+              borderRadius: '18px',
+              ...({
+                cornerShape: 'superellipse(1.333)',
+                WebkitCornerShape: 'superellipse(1.333)',
+              } as any),
+              boxShadow: dropdownBoxShadow,
+              background: 'rgba(250, 250, 250, 0.85)',
+              backdropFilter: 'saturate(1.5) blur(32px)',
+              WebkitBackdropFilter: 'saturate(1.5) blur(32px)',
+            }}
+          >
+            {/* Sub-sections Group (when typing matches sub-sections) */}
+            {matchingSubsections.length > 0 && (
+              <div className="mb-2">
+                <div className="text-[13px] font-medium text-[#8F94A0] px-2.5 pb-1.5 pt-1">
+                  Sub-sections
+                </div>
+                <div className="space-y-0.5">
+                  {matchingSubsections.map((sub) => (
+                    <div
+                      key={sub.name}
+                      onClick={() => handleSelectSubsection(sub.name)}
+                      className="flex items-center justify-between px-2.5 py-2 rounded-[12px] hover:bg-black/[0.04] transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-5 h-5 rounded-[5px] flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0"
+                          style={{ backgroundColor: sub.badgeColor }}
+                        >
+                          {sub.badgeText || (
+                            <span className="w-2 h-2 rounded-full bg-white/70" />
+                          )}
+                        </div>
+                        <span className="text-[14px] font-medium text-[#121417]">
+                          {sub.name}
+                        </span>
                       </div>
-                      <span className="text-[14px] font-medium text-[#121417]">
-                        {sub.name}
+                      <span className="text-[12px] text-muted-foreground font-normal">
+                        Filter by section
                       </span>
                     </div>
-                    <span className="text-[12px] text-muted-foreground font-normal">
-                      Filter by section
-                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Documents Section Header */}
+            <div className="text-[13px] font-medium text-[#8F94A0] px-2.5 pb-1.5 pt-1">
+              Documents
+            </div>
+
+            {/* Documents List */}
+            {filteredItems.length === 0 ? (
+              <div className="px-3 py-6 text-center text-xs text-muted-foreground">
+                No matching documents or sub-sections found.
+              </div>
+            ) : (
+              <div className="space-y-0.5">
+                {filteredItems.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => handleSelectItem(item)}
+                    className="flex items-center gap-3.5 px-2.5 py-1.5 rounded-[12px] hover:bg-black/[0.04] transition-colors cursor-pointer group"
+                  >
+                    {/* Miniature Document Thumbnail Icon */}
+                    <div className="relative shrink-0 w-[24px] h-[32px] bg-white rounded-[3px] border border-black/[0.1] shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col justify-start p-[3px] overflow-visible">
+                      {item.hasImageBanner ? (
+                        <>
+                          <div className="w-full h-[7px] bg-[#93C5FD]/30 rounded-[1px] mb-1 flex items-center justify-center">
+                            <div className="w-2 h-1 bg-[#60A5FA]/40 rounded-full" />
+                          </div>
+                          <div className="w-[12px] h-[1.5px] bg-zinc-300 rounded-full mb-0.5" />
+                          <div className="w-[8px] h-[1.5px] bg-zinc-200 rounded-full" />
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-[10px] h-[1.5px] bg-zinc-400 rounded-full mb-1" />
+                          <div className="w-[14px] h-[1.2px] bg-zinc-200 rounded-full mb-0.5" />
+                          <div className="w-[12px] h-[1.2px] bg-zinc-200 rounded-full mb-0.5" />
+                          <div className="w-[14px] h-[1.2px] bg-zinc-200 rounded-full mb-0.5" />
+                          <div className="w-[8px] h-[1.2px] bg-zinc-200 rounded-full" />
+                        </>
+                      )}
+
+                      {/* Sub-section Corner Badge */}
+                      <div
+                        className="absolute -bottom-1 -right-1 w-3 h-3 rounded-[2.5px] flex items-center justify-center text-[7px] font-bold text-white shadow-sm overflow-hidden"
+                        style={{ backgroundColor: item.badgeColor }}
+                      >
+                        {item.badgeText ? (
+                          item.badgeText
+                        ) : (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Title & Sub-section */}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[14px] font-medium text-[#121417] truncate leading-tight">
+                        {item.title}
+                      </div>
+                      <div className="text-[12px] text-[#6B7280] truncate leading-tight mt-0.5">
+                        In {item.subsection}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Documents Section Header */}
-          <div className="text-[13px] font-medium text-[#8F94A0] px-2.5 pb-1.5 pt-1">
-            Documents
+            )}
           </div>
-
-          {/* Documents List */}
-          {filteredItems.length === 0 ? (
-            <div className="px-3 py-6 text-center text-xs text-muted-foreground">
-              No matching documents or sub-sections found.
-            </div>
-          ) : (
-            <div className="space-y-0.5">
-              {filteredItems.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => handleSelectItem(item)}
-                  className="flex items-center gap-3.5 px-2.5 py-1.5 rounded-[12px] hover:bg-black/[0.04] transition-colors cursor-pointer group"
-                >
-                  {/* Miniature Document Thumbnail Icon */}
-                  <div className="relative shrink-0 w-[24px] h-[32px] bg-white rounded-[3px] border border-black/[0.1] shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col justify-start p-[3px] overflow-visible">
-                    {item.hasImageBanner ? (
-                      <>
-                        <div className="w-full h-[7px] bg-[#93C5FD]/30 rounded-[1px] mb-1 flex items-center justify-center">
-                          <div className="w-2 h-1 bg-[#60A5FA]/40 rounded-full" />
-                        </div>
-                        <div className="w-[12px] h-[1.5px] bg-zinc-300 rounded-full mb-0.5" />
-                        <div className="w-[8px] h-[1.5px] bg-zinc-200 rounded-full" />
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-[10px] h-[1.5px] bg-zinc-400 rounded-full mb-1" />
-                        <div className="w-[14px] h-[1.2px] bg-zinc-200 rounded-full mb-0.5" />
-                        <div className="w-[12px] h-[1.2px] bg-zinc-200 rounded-full mb-0.5" />
-                        <div className="w-[14px] h-[1.2px] bg-zinc-200 rounded-full mb-0.5" />
-                        <div className="w-[8px] h-[1.2px] bg-zinc-200 rounded-full" />
-                      </>
-                    )}
-
-                    {/* Sub-section Corner Badge */}
-                    <div
-                      className="absolute -bottom-1 -right-1 w-3 h-3 rounded-[2.5px] flex items-center justify-center text-[7px] font-bold text-white shadow-sm overflow-hidden"
-                      style={{ backgroundColor: item.badgeColor }}
-                    >
-                      {item.badgeText ? (
-                        item.badgeText
-                      ) : (
-                        <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Title & Sub-section */}
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[14px] font-medium text-[#121417] truncate leading-tight">
-                      {item.title}
-                    </div>
-                    <div className="text-[12px] text-[#6B7280] truncate leading-tight mt-0.5">
-                      In {item.subsection}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </div>

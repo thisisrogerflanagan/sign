@@ -55,7 +55,22 @@ export default async function HomePage(props: HomePageProps) {
 
   const requestsSent = usageRow?.requests_sent || 0
 
-  // 2. Query documents based on search, filter, and sorting
+  // 2. Fetch user profile for display name
+  const { data: userProfile } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', user.id)
+    .single()
+
+  const userName =
+    userProfile?.display_name ||
+    user.user_metadata?.display_name ||
+    user.user_metadata?.full_name ||
+    user.user_metadata?.name ||
+    user.email?.split('@')[0] ||
+    'Joe Banks'
+
+  // 3. Query documents based on search, filter, and sorting
   const filterStatus = searchParams.status
   const searchQuery = searchParams.q
   const page = parseInt(searchParams.page || '1', 10)
@@ -122,16 +137,12 @@ export default async function HomePage(props: HomePageProps) {
   return (
     <AppShell
       documents={documents || []}
-      userName={
-        user.user_metadata?.display_name || user.email?.split('@')[0] || 'Joe Banks'
-      }
+      userName={userName}
       userEmail={user.email}
       requestsSent={requestsSent}
       sidebar={
         <AppSidebar
-          userName={
-            user.user_metadata?.display_name || user.email?.split('@')[0] || 'Joe Banks'
-          }
+          userName={userName}
           userEmail={user.email}
           requestsSent={requestsSent}
         />
@@ -151,7 +162,7 @@ export default async function HomePage(props: HomePageProps) {
           >
             {format(new Date(), 'EEEE, MMMM d')}
           </div>
-          <div className="flex items-center justify-between gap-4 overflow-x-auto pb-1">
+          <div className="flex items-center justify-between gap-4 overflow-visible">
             <div className="flex items-center gap-3.5 shrink-0">
               <SquircleButton href="/send" title="New document">
                 <img

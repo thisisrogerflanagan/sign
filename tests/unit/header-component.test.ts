@@ -23,6 +23,7 @@ vi.mock('@/lib/supabase/client', () => ({
 
 import { AppShell } from '@/components/app-shell'
 import { AppSidebar } from '@/components/app-sidebar'
+import { SearchBar } from '@/components/documents/search-bar'
 
 describe('Issue #33: New app header (60px bar with sidebar toggle, wordmark, search)', () => {
   it('renders a 60px tall, full-width (100%) header without margin-left offset', () => {
@@ -185,6 +186,31 @@ describe('Issue #33: New app header (60px bar with sidebar toggle, wordmark, sea
     expect(html).toContain('aria-label="Help"')
     expect(html).toContain('data-testid="header-avatar-button"')
     expect(html).toContain('RF')
+    expect(html).toContain('background-color:#FFAFA5')
+    expect(html).toContain('color:#892055')
+    expect(html).toContain('border-radius:50%')
+    expect(html).toContain('corner-shape:squircle')
+  })
+
+  it('renders header-avatar-button with RF initials when email or username is thisisrogerflanagan', () => {
+    const html = renderToString(
+      React.createElement(
+        AppShell,
+        {
+          sidebar: React.createElement(AppSidebar, {}),
+          userName: 'thisisrogerflanagan',
+          userEmail: 'thisisrogerflanagan@gmail.com',
+        },
+        React.createElement('div', null, 'Page Content')
+      )
+    )
+
+    expect(html).toContain('data-testid="header-avatar-button"')
+    expect(html).toContain('RF')
+    expect(html).toContain('border-radius:50%')
+    expect(html).toContain('corner-shape:squircle')
+    expect(html).toContain('background-color:#FFAFA5')
+    expect(html).toContain('color:#892055')
   })
 
   it('toggles sidebar visibility and adjusts main content margin without layout shift in header', () => {
@@ -226,5 +252,21 @@ describe('Issue #33: New app header (60px bar with sidebar toggle, wordmark, sea
       /<header[^>]*data-testid="app-header"[^>]*>/
     )![0]
     expect(openHeader).toBe(closedHeader)
+  })
+
+  it('renders search dropdown menu with required superellipse frosted styles', () => {
+    const html = renderToString(
+      React.createElement(SearchBar, {
+        defaultOpen: true,
+      })
+    )
+
+    expect(html).toContain('data-testid="search-dropdown-menu"')
+    expect(html).toContain('search-dropdown-menu')
+    expect(html).toContain('background:rgba(250, 250, 250, 0.85)')
+    expect(html).toContain('backdrop-filter:saturate(1.5) blur(32px)')
+    expect(html).toContain('border-radius:18px')
+    expect(html).toContain('corner-shape:superellipse(1.333)')
+    expect(html).toContain('rgba(0, 0, 0, 0.07) 0px 4px 9px 0px')
   })
 })

@@ -310,13 +310,18 @@ export function NotificationPopup({
   return (
     <div
       ref={popupRef}
-      className="absolute top-[calc(100%+8px)] right-0 z-50 flex flex-col p-4 select-none animate-in fade-in zoom-in-95 duration-150"
+      data-testid="notification-popup-panel"
+      className="notification-popup-panel absolute top-[calc(100%+8px)] right-0 z-50 flex flex-col p-4 select-none animate-in fade-in duration-150"
       style={{
         width: '400px',
         maxWidth: 'calc(100vw - 32px)',
         borderRadius: '18px',
+        ...({
+          cornerShape: 'superellipse(1.333)',
+          WebkitCornerShape: 'superellipse(1.333)',
+        } as any),
         boxShadow: dropdownBoxShadow,
-        background: 'rgba(250, 250, 250, 0.95)',
+        background: 'rgba(250, 250, 250, 0.85)',
         backdropFilter: 'saturate(1.5) blur(32px)',
         WebkitBackdropFilter: 'saturate(1.5) blur(32px)',
       }}

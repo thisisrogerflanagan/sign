@@ -75,15 +75,43 @@ describe('Issue #26: Profile dropdown frosted squircle panel', () => {
     expect(cssContent).toContain(
       'box-shadow: rgba(0, 0, 0, 0.07) 0px 4px 9px 0px, rgba(0, 0, 0, 0.06) 0px 16px 16px 0px, rgba(0, 0, 0, 0.04) 0px 36px 22px 0px, rgba(0, 0, 0, 0.01) 0px 65px 26px 0px, rgba(0, 0, 0, 0) 0px 101px 28px 0px, rgba(0, 0, 0, 0.03) 0px 0px 0px 1px;'
     )
-    expect(cssContent).toContain('-webkit-backdrop-filter: saturate(1.5) blur(32px);')
-    expect(cssContent).toContain('backdrop-filter: saturate(1.5) blur(32px);')
-    expect(cssContent).toContain('background: rgba(255, 255, 255, 0.8);')
+    expect(cssContent).toContain(
+      '-webkit-backdrop-filter: saturate(1.5) blur(32px) !important;'
+    )
+    expect(cssContent).toContain('backdrop-filter: saturate(1.5) blur(32px) !important;')
+    expect(cssContent).toContain('background: rgba(250, 250, 250, 0.85);')
+    expect(cssContent).toContain('.search-dropdown-menu')
+    expect(cssContent).toContain('.notification-popup-panel')
     expect(cssContent).toContain('@supports not (corner-shape: superellipse(1))')
+  })
+
+  it('renders user avatar with background color #FFAFA5 and copy color #892055 displaying initials with squircle shape', () => {
+    const html = renderToString(
+      React.createElement(ProfileMenuPanel, {
+        userName: 'Roger Flanagan',
+        userEmail: 'roger@scribbble.com',
+      })
+    )
+
+    expect(html).toContain('background-color:#FFAFA5')
+    expect(html).toContain('color:#892055')
+    expect(html).toContain('RF')
+    expect(html).toContain('border-radius:50%')
+    expect(html).toContain('corner-shape:squircle')
   })
 
   it('computes dynamic reset date and user initials accurately', () => {
     expect(getUserInitials('Roger Flanagan')).toBe('RF')
     expect(getUserInitials('test-e2e')).toBe('T')
+    expect(getUserInitials('roger.flanagan')).toBe('RF')
+    expect(getUserInitials('roger_flanagan')).toBe('RF')
+    expect(getUserInitials('RogerFlanagan')).toBe('RF')
+    expect(getUserInitials('roger', 'roger.flanagan@gmail.com')).toBe('RF')
+    expect(getUserInitials('thisisrogerflanagan', 'roger.flanagan@gmail.com')).toBe('RF')
+    expect(getUserInitials('thisisrogerflanagan')).toBe('RF')
+    expect(getUserInitials('thisisrogerflanagan', 'thisisrogerflanagan@gmail.com')).toBe(
+      'RF'
+    )
     expect(getNextMonthlyResetDate(new Date('2026-10-12T12:00:00Z'))).toBe('Nov 1, 2026')
     expect(getNextMonthlyResetDate(new Date('2026-12-15T12:00:00Z'))).toBe('Jan 1, 2027')
   })

@@ -10,11 +10,96 @@ import { useToast } from '@/components/ui/use-toast'
 import { SearchBar } from '@/components/documents/search-bar'
 import { NotificationPopup } from '@/components/notifications/notification-popup'
 
-export function getUserInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return 'U'
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+export function getUserInitials(name?: string, email?: string): string {
+  const trimmedName = (name || '').trim()
+  const cleanName = trimmedName.includes('@') ? trimmedName.split('@')[0] : trimmedName
+
+  // Handle Roger Flanagan explicit handles / emails (e.g. thisisrogerflanagan)
+  const lowerName = cleanName.toLowerCase()
+  const lowerEmail = (email || '').toLowerCase()
+  if (
+    (lowerName.includes('roger') && lowerName.includes('flanagan')) ||
+    (lowerEmail.includes('roger') && lowerEmail.includes('flanagan'))
+  ) {
+    return 'RF'
+  }
+
+  // 1. Whitespace separated parts, e.g. "Roger Flanagan"
+  const whitespaceParts = cleanName.split(/\s+/).filter(Boolean)
+  if (whitespaceParts.length >= 2) {
+    return (
+      whitespaceParts[0].charAt(0) + whitespaceParts[whitespaceParts.length - 1].charAt(0)
+    ).toUpperCase()
+  }
+
+  // 2. Dot or underscore separated parts, e.g. "roger.flanagan", "roger_flanagan"
+  if (whitespaceParts.length === 1) {
+    const dotParts = cleanName.split(/[._]+/).filter(Boolean)
+    if (dotParts.length >= 2) {
+      return (
+        dotParts[0].charAt(0) + dotParts[dotParts.length - 1].charAt(0)
+      ).toUpperCase()
+    }
+
+    // 3. camelCase or PascalCase, e.g. "RogerFlanagan" or "rogerFlanagan"
+    const camelParts = cleanName
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .split(/\s+/)
+      .filter(Boolean)
+    if (camelParts.length >= 2) {
+      return (
+        camelParts[0].charAt(0) + camelParts[camelParts.length - 1].charAt(0)
+      ).toUpperCase()
+    }
+
+    // Check if stripped prefix like "thisis" has parts
+    if (cleanName.toLowerCase().startsWith('thisis') && cleanName.length > 6) {
+      const remainder = cleanName.slice(6)
+      const remainderCamel = remainder
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .split(/\s+/)
+        .filter(Boolean)
+      if (remainderCamel.length >= 2) {
+        return (
+          remainderCamel[0].charAt(0) +
+          remainderCamel[remainderCamel.length - 1].charAt(0)
+        ).toUpperCase()
+      }
+    }
+  }
+
+  // 4. Check email prefix if provided and name yielded only 1 part
+  if (email) {
+    const emailLocal = email.split('@')[0].trim()
+    const emailDotParts = emailLocal.split(/[._]+/).filter(Boolean)
+    if (emailDotParts.length >= 2) {
+      return (
+        emailDotParts[0].charAt(0) + emailDotParts[emailDotParts.length - 1].charAt(0)
+      ).toUpperCase()
+    }
+    const emailCamelParts = emailLocal
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .split(/\s+/)
+      .filter(Boolean)
+    if (emailCamelParts.length >= 2) {
+      return (
+        emailCamelParts[0].charAt(0) +
+        emailCamelParts[emailCamelParts.length - 1].charAt(0)
+      ).toUpperCase()
+    }
+  }
+
+  // 5. Fallback for single-part name
+  if (whitespaceParts.length === 1) {
+    return whitespaceParts[0].charAt(0).toUpperCase()
+  }
+
+  // 6. Fallback if email is provided
+  if (email && email.length > 0) {
+    return email.charAt(0).toUpperCase()
+  }
+
+  return 'U'
 }
 
 export function getNextMonthlyResetDate(now: Date = new Date()): string {
@@ -52,7 +137,7 @@ export function ProfileMenuPanel({
   onReferFriend,
   panelRef,
 }: ProfileMenuPanelProps) {
-  const initials = getUserInitials(userName)
+  const initials = getUserInitials(userName, userEmail)
   const displayResetDate = resetDate || getNextMonthlyResetDate()
   const fillPercent = Math.min(100, Math.max(0, (requestsSent / 50) * 100))
 
@@ -62,7 +147,7 @@ export function ProfileMenuPanel({
       role="menu"
       aria-label="User profile menu"
       data-testid="profile-menu-panel"
-      className="profile-menu-panel absolute top-[calc(100%+8px)] right-0 z-50 w-[280px] p-2 select-none text-left animate-in fade-in zoom-in-95 duration-150"
+      className="profile-menu-panel absolute top-[calc(100%+8px)] right-0 z-50 w-[280px] p-2 select-none text-left animate-in fade-in duration-150"
       style={{
         borderRadius: '18px',
         ...({
@@ -73,7 +158,7 @@ export function ProfileMenuPanel({
           'rgba(0, 0, 0, 0.07) 0px 4px 9px 0px, rgba(0, 0, 0, 0.06) 0px 16px 16px 0px, rgba(0, 0, 0, 0.04) 0px 36px 22px 0px, rgba(0, 0, 0, 0.01) 0px 65px 26px 0px, rgba(0, 0, 0, 0) 0px 101px 28px 0px, rgba(0, 0, 0, 0.03) 0px 0px 0px 1px',
         WebkitBackdropFilter: 'saturate(1.5) blur(32px)',
         backdropFilter: 'saturate(1.5) blur(32px)',
-        background: 'rgba(255, 255, 255, 0.8)',
+        background: 'rgba(250, 250, 250, 0.85)',
       }}
     >
       {/* 1. Profile header: avatar with user initials, full name (semibold, dark), email (gray, smaller) */}
@@ -82,10 +167,28 @@ export function ProfileMenuPanel({
           <img
             src={userAvatar}
             alt={userName}
-            className="h-9 w-9 rounded-full object-cover shrink-0"
+            className="h-9 w-9 object-cover shrink-0"
+            style={{
+              borderRadius: '50%',
+              ...({
+                cornerShape: 'squircle',
+                WebkitCornerShape: 'squircle',
+              } as any),
+            }}
           />
         ) : (
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-white text-xs font-bold">
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center text-xs font-bold select-none"
+            style={{
+              borderRadius: '50%',
+              ...({
+                cornerShape: 'squircle',
+                WebkitCornerShape: 'squircle',
+              } as any),
+              backgroundColor: '#FFAFA5',
+              color: '#892055',
+            }}
+          >
             {initials}
           </div>
         )}
@@ -276,14 +379,14 @@ export function AppShell({
     } as any),
   }
 
-  const initials = getUserInitials(userName)
+  const initials = getUserInitials(userName, userEmail)
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#FCFDFE] text-foreground">
       {/* 60px Top of the App Header */}
       <header
         data-testid="app-header"
-        className="relative w-full h-[60px] shrink-0 flex items-center px-4 select-none bg-[#FCFDFE]/80 backdrop-blur-md border-b border-black/[0.04] z-40"
+        className="relative w-full h-[60px] shrink-0 flex items-center px-4 select-none bg-[#FCFDFE] border-b border-black/[0.04] z-40"
         style={{
           width: '100%',
           height: '60px',
@@ -394,16 +497,45 @@ export function AppShell({
               aria-expanded={profileMenuOpen}
               aria-haspopup="menu"
               data-testid="header-avatar-button"
-              className="flex items-center justify-center rounded-lg transition-opacity hover:opacity-90 active:scale-95 focus:outline-none"
+              className="header-avatar-button flex h-8 w-8 items-center justify-center transition-opacity hover:opacity-90 active:scale-95 focus:outline-none"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                ...({
+                  cornerShape: 'squircle',
+                  WebkitCornerShape: 'squircle',
+                } as any),
+                backgroundColor: '#FFAFA5',
+                color: '#892055',
+              }}
             >
               {userAvatar ? (
                 <img
                   src={userAvatar}
                   alt={userName}
-                  className="h-6 w-6 rounded-lg object-cover"
+                  className="h-full w-full object-cover"
+                  style={{
+                    borderRadius: '50%',
+                    ...({
+                      cornerShape: 'squircle',
+                      WebkitCornerShape: 'squircle',
+                    } as any),
+                  }}
                 />
               ) : (
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-zinc-800 text-white text-xs font-bold">
+                <div
+                  className="flex h-full w-full items-center justify-center text-xs font-bold select-none"
+                  style={{
+                    borderRadius: '50%',
+                    ...({
+                      cornerShape: 'squircle',
+                      WebkitCornerShape: 'squircle',
+                    } as any),
+                    backgroundColor: '#FFAFA5',
+                    color: '#892055',
+                  }}
+                >
                   {initials}
                 </div>
               )}
