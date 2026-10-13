@@ -300,7 +300,8 @@
 }
 .profile-menu-panel,
 .search-dropdown-menu,
-.notification-popup-panel {
+.notification-popup-panel,
+.settings-modal-panel {
   border-radius: 18px;
   corner-shape: superellipse(1.333);
   -webkit-corner-shape: superellipse(1.333);
@@ -320,7 +321,8 @@
 @supports not (corner-shape: superellipse(1)) {
   .profile-menu-panel,
   .search-dropdown-menu,
-  .notification-popup-panel {
+  .notification-popup-panel,
+  .settings-modal-panel {
     border-radius: 18px;
   }
 }

@@ -161,11 +161,16 @@ export function AppSidebar({ open = true, ..._props }: AppSidebarProps) {
         className="mt-auto flex flex-col items-center gap-[24px] w-full"
         style={{ gap: '24px' }}
       >
-        <Link
-          href="/settings"
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('open-settings'))
+            }
+          }}
           aria-label="Settings"
           title="Settings"
-          className="flex items-center justify-center text-[#737373] hover:text-[#111111] transition-colors"
+          className="flex items-center justify-center text-[#737373] hover:text-[#111111] transition-colors focus:outline-none cursor-pointer"
           style={{ color: '#737373' }}
         >
           <Settings
@@ -174,7 +179,7 @@ export function AppSidebar({ open = true, ..._props }: AppSidebarProps) {
             className="h-[24px] w-[24px] shrink-0 text-[#737373]"
             style={{ color: '#737373' }}
           />
-        </Link>
+        </button>
 
         <button
           type="button"

@@ -36,7 +36,7 @@ describe('Issue #26: Profile dropdown frosted squircle panel', () => {
 
     // 4. Settings row
     expect(html).toContain('Settings')
-    expect(html).toContain('href="/settings"')
+    expect(html).toContain('data-testid="profile-settings-button"')
 
     // 5. Help row
     expect(html).toContain('Help')

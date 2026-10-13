@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/components/ui/use-toast'
 import { SearchBar, SearchDocument } from '@/components/documents/search-bar'
 import { NotificationPopup } from '@/components/notifications/notification-popup'
+import { SettingsModal } from '@/components/settings/settings-modal'
 
 export function getUserInitials(name?: string, email?: string): string {
   const trimmedName = (name || '').trim()
@@ -121,6 +122,7 @@ export interface ProfileMenuPanelProps {
   requestsSent?: number
   resetDate?: string
   onClose?: () => void
+  onOpenSettings?: () => void
   onSignOut?: () => void
   onReferFriend?: () => void
   panelRef?: React.RefObject<HTMLDivElement | null>
@@ -133,6 +135,7 @@ export function ProfileMenuPanel({
   requestsSent = 0,
   resetDate,
   onClose,
+  onOpenSettings,
   onSignOut,
   onReferFriend,
   panelRef,
@@ -220,14 +223,18 @@ export function ProfileMenuPanel({
       <div className="my-1 h-px bg-black/[0.06]" role="separator" />
 
       {/* 4. Settings row (Lucide settings gear icon) */}
-      <Link
-        href="/settings"
-        onClick={onClose}
-        className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-medium text-[#121417] hover:bg-black/[0.04] transition-colors"
+      <button
+        type="button"
+        data-testid="profile-settings-button"
+        onClick={() => {
+          onClose?.()
+          onOpenSettings?.()
+        }}
+        className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-medium text-[#121417] hover:bg-black/[0.04] transition-colors text-left focus:outline-none cursor-pointer"
       >
         <Settings className="h-4 w-4 text-[#5F6269]" />
         <span>Settings</span>
-      </Link>
+      </button>
 
       {/* 5. Help row (Lucide circle-help icon) */}
       <a
@@ -297,11 +304,20 @@ export function AppShell({
   const [sidebarOpen, setSidebarOpen] = useState(defaultSidebarOpen)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
   const profileMenuContainerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const { toast } = useToast()
+
+  useEffect(() => {
+    function handleOpenSettings() {
+      setSettingsModalOpen(true)
+    }
+    window.addEventListener('open-settings', handleOpenSettings)
+    return () => window.removeEventListener('open-settings', handleOpenSettings)
+  }, [])
 
   useEffect(() => {
     async function checkUnread() {
@@ -544,6 +560,10 @@ export function AppShell({
                 userAvatar={userAvatar}
                 requestsSent={requestsSent}
                 onClose={() => setProfileMenuOpen(false)}
+                onOpenSettings={() => {
+                  setProfileMenuOpen(false)
+                  setSettingsModalOpen(true)
+                }}
                 onSignOut={handleSignOut}
                 onReferFriend={handleReferFriend}
               />
@@ -578,6 +598,16 @@ export function AppShell({
           {children}
         </div>
       </div>
+
+      {/* Settings Popup Panel */}
+      <SettingsModal
+        isOpen={settingsModalOpen}
+        onClose={() => setSettingsModalOpen(false)}
+        userName={userName}
+        userEmail={userEmail}
+        userAvatar={userAvatar}
+        initialUsage={{ requestsSent }}
+      />
     </div>
   )
 }
